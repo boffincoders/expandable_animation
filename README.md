@@ -21,6 +21,19 @@ music player or a photo thumbnail.
 **[Documentation](https://boffincoders.github.io/expandable_animation/)** ·
 **[API reference](https://pub.dev/documentation/expandable_animation/latest/)**
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/boffincoders/expandable_animation/main/screenshots/card-to-fullscreen.gif" alt="Flutter card to fullscreen animation with drag-to-dismiss" width="220">
+  <img src="https://raw.githubusercontent.com/boffincoders/expandable_animation/main/screenshots/expandable-music-player.gif" alt="Flutter expandable music player animation" width="220">
+  <img src="https://raw.githubusercontent.com/boffincoders/expandable_animation/main/screenshots/app-store-card-animation.gif" alt="Flutter App Store-style card animation" width="220">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/boffincoders/expandable_animation/main/screenshots/fullscreen-image.gif" alt="Flutter fullscreen image transition from a gallery thumbnail" width="220">
+  <img src="https://raw.githubusercontent.com/boffincoders/expandable_animation/main/screenshots/expandable-sheet.gif" alt="Flutter widget expanding into a bottom sheet" width="220">
+</p>
+
+The animations above are rendered frame by frame from the [example app](example/)
+with `./scripts/record_media.sh`.
+
 ## Why use Expandable Animation?
 
 Building a card-to-fullscreen transition by hand usually means combining a

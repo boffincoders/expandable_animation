@@ -7,6 +7,18 @@ homepage: https://boffincoders.github.io/expandable_animation/
 repository: https://github.com/boffincoders/expandable_animation
 issue_tracker: https://github.com/boffincoders/expandable_animation/issues
 
+screenshots:
+  - description: A Flutter product card expanding into a fullscreen page and dismissed with a downward drag.
+    path: screenshots/card-to-fullscreen.gif
+  - description: An expandable music player that grows from a mini player into a fullscreen player.
+    path: screenshots/expandable-music-player.gif
+  - description: A gallery thumbnail opening into a fullscreen image viewer and returning to the grid.
+    path: screenshots/fullscreen-image.gif
+  - description: An App Store-style card that springs open into a scrollable article.
+    path: screenshots/app-store-card-animation.gif
+  - description: A notification banner expanding into a partial-height bottom sheet.
+    path: screenshots/expandable-sheet.gif
+
 topics:
   - animation
   - transition

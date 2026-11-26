@@ -42,7 +42,8 @@ commands directly: `dart format --set-exit-if-changed .`, `flutter analyze`,
   `golden`; regenerate them on macOS with
   `flutter test --tags golden --update-goldens`.
 - Update `README.md`, `CHANGELOG.md` and the example app when behavior
-  changes.
+  changes. Regenerate the GIFs in `screenshots/` with
+  `./scripts/record_media.sh` (requires ffmpeg) when visuals change.
 - Use [Conventional Commits](https://www.conventionalcommits.org/), for
   example `feat: add horizontal dismissal` or `fix: keep source hidden while
   collapsing`.
