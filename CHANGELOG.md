@@ -3,6 +3,11 @@
 All notable changes to this package are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+- Documentation: platform support table now reflects integration tests run on
+  the iOS Simulator, the Android emulator and macOS desktop.
+
 ## 0.1.0
 
 Initial release.

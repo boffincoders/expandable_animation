@@ -281,9 +281,9 @@ platform channels other than optional haptic feedback.
 
 | Platform | Status |
 | --- | --- |
-| Android | Expected to work; covered by headless widget tests. Not yet validated on a physical device. |
-| iOS | Expected to work; covered by headless widget tests. Not yet validated on a physical device. |
-| Web | Built in CI; demo verified in Chrome with mouse input. |
+| Android | Example app runs and its integration tests pass on the Android emulator (Android 17). Not yet tested on a physical device. |
+| iOS | Example app runs and its integration tests pass on the iOS Simulator (iPhone, iOS 26). Not yet tested on a physical device. |
+| Web | Built in CI; the live demo was tested manually in Chrome with a mouse. |
 | macOS | Example app builds and its integration tests pass on macOS desktop. |
 | Windows | Expected to work; not yet validated. |
 | Linux | Expected to work; not yet validated. |
