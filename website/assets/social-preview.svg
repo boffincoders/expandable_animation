@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1b1640"/><stop offset="1" stop-color="#0d3b45"/></linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7b61ff"/><stop offset="1" stop-color="#22c1c3"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="80" y="330" width="220" height="140" rx="26" fill="url(#card)" opacity="0.55"/>
+  <rect x="200" y="250" width="330" height="210" rx="18" fill="url(#card)" opacity="0.75"/>
+  <rect x="340" y="140" width="460" height="360" rx="8" fill="url(#card)"/>
+  <rect x="380" y="180" width="380" height="120" rx="12" fill="#ffffff" opacity="0.35"/>
+  <rect x="380" y="320" width="260" height="22" rx="11" fill="#ffffff" opacity="0.5"/>
+  <rect x="380" y="356" width="330" height="22" rx="11" fill="#ffffff" opacity="0.35"/>
+  <text x="840" y="270" font-family="Helvetica, Arial, sans-serif" font-size="54" font-weight="700" fill="#ffffff">Expandable</text>
+  <text x="840" y="335" font-family="Helvetica, Arial, sans-serif" font-size="54" font-weight="700" fill="#ffffff">Animation</text>
+  <text x="842" y="390" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#c9c3ff">Flutter widget-to-fullscreen</text>
+  <text x="842" y="426" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#c9c3ff">transitions</text>
+</svg>

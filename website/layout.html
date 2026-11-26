@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{DESCRIPTION}}">
+  <link rel="canonical" href="{{CANONICAL}}">
+  {{ROBOTS}}
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#5b4bd6">
+  <meta property="og:type" content="{{OG_TYPE}}">
+  <meta property="og:site_name" content="Expandable Animation for Flutter">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:url" content="{{CANONICAL}}">
+  <meta property="og:image" content="{{SITE_URL}}assets/social-preview.png">
+  <meta property="og:image:alt" content="A Flutter card expanding into a fullscreen page">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{TITLE}}">
+  <meta name="twitter:description" content="{{DESCRIPTION}}">
+  <link rel="icon" href="{{ROOT}}assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ROOT}}assets/site.css">
+  <script>
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  {{STRUCTURED_DATA}}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{{ROOT}}" aria-label="Expandable Animation home">
+        <img src="{{ROOT}}assets/favicon.svg" alt="" width="28" height="28">
+        <span>Expandable Animation</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+          {{NAV}}
+        <a href="{{ROOT}}demo/" class="nav-cta">Live demo</a>
+        <a href="https://github.com/boffincoders/expandable_animation" rel="noopener">GitHub</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="{{HERO_CLASS}}">
+      <div class="container">
+        <h1>{{HEADING}}</h1>
+        <p class="lead">{{DESCRIPTION}}</p>
+      </div>
+    </div>
+    <div class="container content">
+{{BODY}}
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p><strong>expandable_animation</strong> {{VERSION}} · MIT licensed · Flutter package</p>
+      <p>
+        <a href="https://pub.dev/packages/expandable_animation" rel="noopener">pub.dev</a> ·
+        <a href="https://github.com/boffincoders/expandable_animation" rel="noopener">GitHub</a> ·
+        <a href="https://pub.dev/documentation/expandable_animation/latest/" rel="noopener">API reference</a> ·
+        <a href="{{ROOT}}examples/">Examples</a>
+      </p>
+    </div>
+  </footer>
+  <script src="{{ROOT}}assets/site.js" defer></script>
+</body>
+</html>

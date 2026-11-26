@@ -1,0 +1,70 @@
+---
+title: Flutter Morphing Animation — Shape, Size and Color Morphs
+description: Create Flutter widget morphing animations with spring physics, overshoot and custom layer transitions using expandable_animation.
+path: examples/morphing-animation/
+heading: Flutter morphing animation
+section: examples
+schema: article
+---
+<article>
+  <p>Morphing is what makes a transition feel physical: one object visibly changes shape instead of being
+  replaced. <code>ExpandableAnimation</code> morphs bounds, corners and color; this guide shows how to shape that
+  motion with springs and how to control what happens to the content inside.</p>
+
+  <h2>Spring-driven morphs</h2>
+<pre><code class="language-dart">ExpandableAnimation(
+  physics: const ExpandableAnimationPhysics.spring(
+    stiffness: 220,
+    dampingRatio: 0.72, // overshoots a little, then settles
+  ),
+  borderRadius: BorderRadius.circular(24),
+  expandedBuilder: (context) =&gt; const ArticlePage(),
+  child: const StoryCard(),
+)</code></pre>
+  <p>With a damping ratio below 1.0 the surface grows slightly past its final bounds before settling. The
+  collapse always uses a critically damped spring, so it never undershoots the source. Presets:
+  <code>smooth</code>, <code>bouncy</code> and <code>snappy</code>.</p>
+
+  <h2>Controlling the content</h2>
+  <p>By default the child fades out and the expanded view fades in during the first 40% of the morph. Replace
+  that with a <code>transitionBuilder</code> — for example, a fade-through with a gap between the two:</p>
+<pre><code class="language-dart">ExpandableAnimation(
+  transitionBuilder: (context, animation, collapsed, expanded) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        FadeTransition(
+          opacity: ReverseAnimation(CurvedAnimation(
+            parent: animation,
+            curve: const Interval(0, 0.3),
+          )),
+          child: collapsed,
+        ),
+        FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: const Interval(0.3, 0.7),
+          ),
+          child: expanded,
+        ),
+      ],
+    );
+  },
+  expandedBuilder: (context) =&gt; const DetailsPage(),
+  child: const SummaryCard(),
+)</code></pre>
+
+  <h2>Using the spring curve elsewhere</h2>
+  <p>The spring shape is exported as a regular Flutter <code>Curve</code>:</p>
+<pre><code class="language-dart">final physics = ExpandableAnimationPhysics.bouncy;
+AnimatedScale(
+  scale: selected ? 1.1 : 1.0,
+  duration: physics.settleDuration,
+  curve: physics.curve,
+  child: const Icon(Icons.favorite),
+)</code></pre>
+
+  <h2>Try it</h2>
+  <p>Switch to <em>Spring</em> in the <a href="{{ROOT}}playground/">playground</a>, or open the
+  <a href="{{ROOT}}demo/#/app-store-cards">App Store-style cards demo</a>.</p>
+</article>

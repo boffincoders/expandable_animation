@@ -1,0 +1,64 @@
+---
+title: Flutter OpenContainer and Hero Alternative — A Fair Comparison
+description: Compare Flutter Hero, the animations package OpenContainer and expandable_animation for card-to-detail and container transform transitions.
+path: examples/opencontainer-alternative/
+heading: A Flutter OpenContainer and Hero alternative
+section: examples
+schema: article
+---
+<article>
+  <p>Flutter has two well-known ways to connect a small element to a larger view: the built-in
+  <code>Hero</code> widget and <code>OpenContainer</code> from the official <code>animations</code> package.
+  Both are good tools. This page explains where <code>ExpandableAnimation</code> differs, so you can pick the
+  right one.</p>
+
+  <h2>Side by side</h2>
+  <table>
+    <thead><tr><th></th><th>Hero</th><th>OpenContainer</th><th>ExpandableAnimation</th></tr></thead>
+    <tbody>
+      <tr><td>Model</td><td>Shared element flies between two routes</td><td>Container transforms into a new route</td><td>Container transforms into an expanded view (a modal route)</td></tr>
+      <tr><td>Setup</td><td>Matching tags in both pages</td><td>One widget, closed and open builders</td><td>One widget, child and expanded builder</td></tr>
+      <tr><td>Target</td><td>A full page</td><td>A full page</td><td>Fullscreen, dialog, sheet or custom bounds</td></tr>
+      <tr><td>Drag-to-dismiss</td><td>Not built in</td><td>Not built in</td><td>Built in, with scroll coordination</td></tr>
+      <tr><td>Spring physics</td><td>No</td><td>No</td><td>Optional</td></tr>
+      <tr><td>Controller</td><td>Navigation</td><td><code>openContainer</code> callback</td><td><code>ExpandableAnimationController</code></td></tr>
+      <tr><td>Dependency</td><td>Flutter SDK</td><td><code>animations</code> package</td><td><code>expandable_animation</code> package</td></tr>
+    </tbody>
+  </table>
+
+  <h2>When Hero is the better choice</h2>
+  <p>Use <code>Hero</code> when one element — an avatar, a product photo — should travel between two
+  full pages that are otherwise independent, and the destination is a normal navigation push.</p>
+
+  <h2>When OpenContainer is the better choice</h2>
+  <p>Use <code>OpenContainer</code> when you want the Material container transform pattern exactly as the
+  Material motion guidelines describe it, and a tap-to-open, back-to-close flow is enough.</p>
+
+  <h2>When ExpandableAnimation fits</h2>
+  <ul>
+    <li>You want users to dismiss the view by dragging it, including from scrollable content.</li>
+    <li>You want to expand into a dialog or a partial sheet, not only a page.</li>
+    <li>You want spring motion, interruptible transitions and a controller with phase and progress.</li>
+  </ul>
+
+  <h2>Migrating from OpenContainer</h2>
+<pre><code class="language-dart">// Before
+OpenContainer(
+  closedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  closedBuilder: (context, open) =&gt; ProductCard(product: product),
+  openBuilder: (context, close) =&gt; ProductDetails(product: product),
+)
+
+// After
+ExpandableAnimation(
+  borderRadius: BorderRadius.circular(16),
+  expandedBuilder: (context) =&gt; ProductDetails(product: product),
+  child: ProductCard(product: product),
+)</code></pre>
+  <p>Where your open page called <code>close()</code>, call
+  <code>ExpandableAnimation.of(context).collapse()</code> or <code>Navigator.pop(context)</code>.</p>
+
+  <h2>Try it</h2>
+  <p>Compare the feel in the <a href="{{ROOT}}demo/">live demo</a>, or start with the
+  <a href="{{ROOT}}examples/card-to-fullscreen/">card to fullscreen guide</a>.</p>
+</article>

@@ -1,0 +1,53 @@
+---
+title: Expandable Animation — Flutter Widget to Fullscreen Animations
+description: Flutter package for widget-to-fullscreen transitions, expandable card animations and container morphing with spring physics and drag-to-dismiss.
+path:
+heading: Expand any widget. Animate every transition.
+section: home
+schema: software
+layout: landing
+---
+<section>
+  <div class="actions">
+    <a class="button primary" href="{{ROOT}}getting-started/">Get started</a>
+    <a class="button" href="{{ROOT}}demo/">Open the live demo</a>
+    <a class="button" href="https://pub.dev/packages/expandable_animation" rel="noopener">View on pub.dev</a>
+  </div>
+  <div class="install">
+<pre><code>flutter pub add expandable_animation</code></pre>
+  </div>
+  <div class="demo-frame" aria-hidden="true"><div class="morph"></div></div>
+
+  <p><strong>Expandable Animation</strong> (<code>expandable_animation</code>) is a Flutter package for
+  smooth <strong>widget-to-fullscreen transitions</strong>, <strong>expandable card animations</strong> and
+  interactive <strong>container morphing</strong>. Wrap any widget, return the expanded view from a
+  builder, and the package morphs its position, size, corner radius and color into a fullscreen page,
+  a centered dialog or a bottom sheet — then back again.</p>
+
+<pre><code class="language-dart">ExpandableAnimation(
+  borderRadius: BorderRadius.circular(20),
+  expandedBuilder: (context) =&gt; const ProductDetails(),
+  child: const ProductCard(),
+)</code></pre>
+
+  <h2>What you get</h2>
+  <div class="grid">
+    <div class="card"><span class="badge">Transition</span><h3>Container transform</h3><p>Position, size, border radius and surface color interpolate together for one continuous motion.</p></div>
+    <div class="card"><span class="badge">Gesture</span><h3>Drag to dismiss</h3><p>Pull the expanded view down to shrink it and send it home, with velocity and distance thresholds.</p></div>
+    <div class="card"><span class="badge">Physics</span><h3>Spring motion</h3><p>Use duration and curve, or spring physics with optional overshoot and presets.</p></div>
+    <div class="card"><span class="badge">Layout</span><h3>Fullscreen, dialog or sheet</h3><p>Expand to the whole screen, a centered panel, a partial-height sheet or custom bounds.</p></div>
+    <div class="card"><span class="badge">Navigation</span><h3>Back button and Escape</h3><p>The expanded view is a real route: back, Escape, <code>PopScope</code> and focus behave as expected.</p></div>
+    <div class="card"><span class="badge">Dependencies</span><h3>Flutter SDK only</h3><p>No third-party runtime dependencies, no platform channels besides optional haptics.</p></div>
+  </div>
+
+  <h2>Examples</h2>
+  <p>Each guide explains the problem, shows the code and links to a runnable demo.</p>
+  <div class="grid">
+    <a class="card" href="{{ROOT}}examples/card-to-fullscreen/"><h3>Card to fullscreen animation</h3><p>Morph a product card into a detail page.</p></a>
+    <a class="card" href="{{ROOT}}examples/expandable-music-player/"><h3>Expandable music player</h3><p>Mini player to full player with shared playback state.</p></a>
+    <a class="card" href="{{ROOT}}examples/fullscreen-image/"><h3>Fullscreen image transition</h3><p>Open gallery thumbnails into an image viewer.</p></a>
+    <a class="card" href="{{ROOT}}examples/drag-to-dismiss/"><h3>Drag-to-dismiss animation</h3><p>Interactive dismissal that cooperates with scrolling.</p></a>
+    <a class="card" href="{{ROOT}}examples/container-transform/"><h3>Container transform animation</h3><p>How the morph works and how to tune it.</p></a>
+    <a class="card" href="{{ROOT}}examples/opencontainer-alternative/"><h3>OpenContainer alternative</h3><p>A fair comparison with Hero and OpenContainer.</p></a>
+  </div>
+</section>

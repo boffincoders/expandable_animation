@@ -1,0 +1,67 @@
+---
+title: Flutter Drag-to-Dismiss Animation with Scroll Coordination
+description: Add interactive drag-to-dismiss to a Flutter fullscreen view, with velocity and distance thresholds, haptics and scrollable content support.
+path: examples/drag-to-dismiss/
+heading: Flutter drag-to-dismiss animation
+section: examples
+schema: article
+---
+<article>
+  <p>Drag-to-dismiss lets users close a fullscreen view the way they opened it: directly, with their finger.
+  It is on by default in <code>ExpandableAnimation</code>.</p>
+
+  <h2>How the gesture works</h2>
+  <ol>
+    <li>The user drags the expanded view downward. It follows the finger (scaled by
+      <code>dragResistance</code>), shrinks toward <code>minScale</code>, rounds its corners and the background
+      fades.</li>
+    <li>On release it dismisses if it was dragged at least <code>dismissThreshold</code> × its height, or
+      flung downward faster than <code>velocityThreshold</code>.</li>
+    <li>Otherwise it springs back, carrying the release velocity. A fast upward fling always cancels.</li>
+    <li>When it dismisses, the collapse starts from exactly where the finger left it.</li>
+  </ol>
+
+<pre><code class="language-dart">ExpandableAnimation(
+  enableDragToDismiss: true,
+  gestureConfig: const ExpandableAnimationGestureConfig(
+    dismissThreshold: 0.2,
+    velocityThreshold: 700,
+    minScale: 0.85,
+    dragResistance: 0.6,
+    enableHapticFeedback: true,
+  ),
+  expandedBuilder: (context) =&gt; const DetailsPage(),
+  child: const SummaryCard(),
+)</code></pre>
+
+  <h2>Scrollable content</h2>
+  <p>Vertical lists inside the expanded view keep scrolling normally. The dismiss gesture only starts when a
+  list that is already at its top is pulled further down, and it hands control back if the user drags up
+  again. Horizontal scrollables, such as a <code>PageView</code>, are never affected. Set
+  <code>dismissFromScrollableContent: false</code> to dismiss only from non-scrolling areas.</p>
+
+  <h2>Preventing a dismissal</h2>
+<pre><code class="language-dart">PopScope(
+  canPop: !hasUnsavedChanges,
+  onPopInvokedWithResult: (didPop, result) {
+    if (!didPop) showDiscardDialog(context);
+  },
+  child: const EditForm(),
+)</code></pre>
+  <p>With <code>canPop: false</code>, drags spring back and background taps, Escape and the back button are
+  ignored; <code>controller.collapse()</code> still works.</p>
+
+  <h2>Observing the drag</h2>
+<pre><code class="language-dart">ListenableBuilder(
+  listenable: controller,
+  builder: (context, _) =&gt; Opacity(
+    opacity: controller.isDragging ? controller.progress : 1,
+    child: const Toolbar(),
+  ),
+)</code></pre>
+
+  <h2>Try it</h2>
+  <p>Change the thresholds in the <a href="{{ROOT}}playground/">playground</a>, or drag the
+  <a href="{{ROOT}}demo/#/app-store-cards">article cards</a> and the
+  <a href="{{ROOT}}demo/#/music-player">music player</a>.</p>
+</article>

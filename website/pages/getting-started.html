@@ -1,0 +1,53 @@
+---
+title: Getting Started with Expandable Animation for Flutter
+description: Install expandable_animation, wrap a widget and build your first Flutter card-to-fullscreen transition in a few lines of Dart.
+path: getting-started/
+heading: Getting started
+section: getting-started
+schema: article
+---
+<article>
+  <h2 id="install">1. Install the package</h2>
+<pre><code>flutter pub add expandable_animation</code></pre>
+  <p>Then import it:</p>
+<pre><code class="language-dart">import 'package:expandable_animation/expandable_animation.dart';</code></pre>
+  <p>The package supports Flutter 3.27 and later and has no runtime dependencies besides the Flutter SDK.</p>
+
+  <h2 id="wrap">2. Wrap a widget</h2>
+  <p><code>ExpandableAnimation</code> needs two things: the <code>child</code> to show in place, and an
+  <code>expandedBuilder</code> that builds the larger view.</p>
+<pre><code class="language-dart">ExpandableAnimation(
+  borderRadius: BorderRadius.circular(20),
+  expandedBuilder: (context) =&gt; const ProductDetails(),
+  child: const ProductCard(),
+)</code></pre>
+  <p>Tap the card: it lifts out of the layout and morphs into <code>ProductDetails</code>. Drag the page down,
+  press the back button, press Escape, or call <code>Navigator.pop(context)</code> to collapse it.</p>
+
+  <h2 id="seamless">3. Make the morph seamless</h2>
+  <p>The morphing surface sits behind both widgets. Give it the same corner radius and color as your card,
+  and the color of your detail page, so the transition looks like one object changing shape:</p>
+<pre><code class="language-dart">ExpandableAnimation(
+  borderRadius: BorderRadius.circular(20),
+  collapsedColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+  expandedColor: Theme.of(context).colorScheme.surface,
+  expandedBuilder: (context) =&gt; ProductDetails(product: product),
+  child: ProductCard(product: product),
+)</code></pre>
+
+  <h2 id="close">4. Add a close button</h2>
+  <p>Drag-to-dismiss is convenient but not discoverable for everyone. Add a visible close button inside the
+  expanded view:</p>
+<pre><code class="language-dart">IconButton(
+  tooltip: 'Close',
+  icon: const Icon(Icons.close),
+  onPressed: () =&gt; ExpandableAnimation.of(context).collapse(),
+)</code></pre>
+
+  <h2 id="next">Next steps</h2>
+  <ul>
+    <li>Read the <a href="{{ROOT}}documentation/">documentation</a> for modes, the controller, physics and gestures.</li>
+    <li>Browse the <a href="{{ROOT}}examples/">examples</a>, from music players to App Store-style cards.</li>
+    <li>Experiment in the <a href="{{ROOT}}playground/">transitions playground</a> and copy the generated code.</li>
+  </ul>
+</article>

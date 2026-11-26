@@ -1,0 +1,37 @@
+---
+title: Flutter Transition Playground — Tune and Copy Animation Code
+description: Interactively tune duration, curves, springs, corner radius, background blur and drag thresholds, then copy the matching Flutter code.
+path: playground/
+heading: Transitions playground
+section: playground
+schema: article
+---
+<section>
+  <p>The playground is part of the Flutter web demo. Adjust any option, tap the preview card to try it, and
+  copy the generated <code>ExpandableAnimation</code> code.</p>
+  <div class="actions">
+    <a class="button primary" href="{{ROOT}}demo/#/playground">Open the playground</a>
+  </div>
+  <h2>What you can change</h2>
+  <ul>
+    <li><strong>Expansion mode</strong>: fullscreen, dialog or sheet.</li>
+    <li><strong>Motion</strong>: duration and curve, or spring stiffness and damping ratio.</li>
+    <li><strong>Shape and background</strong>: border radius, background blur and opacity.</li>
+    <li><strong>Gestures</strong>: drag-to-dismiss on or off, dismiss threshold, velocity threshold, minimum
+      scale and haptic feedback.</li>
+  </ul>
+  <p>Example output:</p>
+<pre><code class="language-dart">ExpandableAnimation(
+  mode: const ExpandableAnimationMode.dialog(),
+  physics: const ExpandableAnimationPhysics.spring(
+    stiffness: 200,
+    dampingRatio: 0.80,
+  ),
+  borderRadius: BorderRadius.circular(24),
+  expandedBorderRadius: BorderRadius.circular(28),
+  backgroundBlur: 8,
+  expandedBuilder: (context) =&gt; const DetailsPage(),
+  child: const PreviewCard(),
+)</code></pre>
+  <p>Every option is described in the <a href="{{ROOT}}documentation/">documentation</a>.</p>
+</section>

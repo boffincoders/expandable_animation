@@ -1,0 +1,53 @@
+---
+title: Flutter Container Transform Animation with ExpandableAnimation
+description: Build a Flutter container transform that morphs position, size, corner radius and color between a widget and its expanded view.
+path: examples/container-transform/
+heading: Flutter container transform animation
+section: examples
+schema: article
+---
+<article>
+  <p>A <strong>container transform</strong> turns one element into another by morphing the container that
+  holds them: its bounds, its corners and its color change together while the content cross-fades. It keeps a
+  strong visual link between where the user tapped and what opened.</p>
+
+  <h2>What morphs</h2>
+  <table>
+    <thead><tr><th>Property</th><th>From</th><th>To</th></tr></thead>
+    <tbody>
+      <tr><td>Bounds</td><td>The child's on-screen rectangle</td><td>The rectangle resolved by <code>mode</code></td></tr>
+      <tr><td>Corner radius</td><td><code>borderRadius</code></td><td><code>expandedBorderRadius</code></td></tr>
+      <tr><td>Surface color</td><td><code>collapsedColor</code></td><td><code>expandedColor</code></td></tr>
+      <tr><td>Content</td><td>The child</td><td>The <code>expandedBuilder</code> result (cross-fade)</td></tr>
+      <tr><td>Background</td><td>Transparent</td><td><code>backgroundColor</code> at <code>backgroundOpacity</code>, optional blur</td></tr>
+    </tbody>
+  </table>
+
+<pre><code class="language-dart">ExpandableAnimation(
+  mode: const ExpandableAnimationMode.dialog(maxSize: Size(760, 560)),
+  borderRadius: BorderRadius.circular(18),
+  expandedBorderRadius: BorderRadius.circular(28),
+  collapsedColor: scheme.surfaceContainerHigh,
+  expandedColor: scheme.surfaceContainerLow,
+  backgroundOpacity: 0.35,
+  backgroundBlur: 8,
+  expandedBuilder: (context) =&gt; MetricDetails(metric: metric),
+  child: MetricTile(metric: metric),
+)</code></pre>
+
+  <h2>How the content stays smooth</h2>
+  <p>Both the child and the expanded view are laid out once at their own natural size and then scaled to the
+  width of the morphing surface, aligned to the top. Because their constraints never change during the
+  animation, Flutter does not re-run their layout every frame — only a scale transform and a clip change. This
+  keeps heavy expanded pages cheap to animate.</p>
+
+  <h2>Reversing correctly</h2>
+  <p>When collapsing, the child's position is measured again. If the list scrolled or the window resized
+  while the view was open, the surface lands where the child is now. If the child is gone entirely, the view
+  fades out in place instead of flying to a stale position.</p>
+
+  <h2>Try it</h2>
+  <p>Open the <a href="{{ROOT}}demo/#/dashboard">dashboard demo</a> (dialog on wide windows) or the
+  <a href="{{ROOT}}playground/">playground</a>. Related: <a href="{{ROOT}}examples/morphing-animation/">morphing
+  with springs and custom layers</a>.</p>
+</article>

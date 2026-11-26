@@ -1,0 +1,186 @@
+---
+title: Expandable Animation Documentation — Flutter Expandable Widget API
+description: Reference for the ExpandableAnimation widget, controller, expansion modes, spring physics, drag-to-dismiss gestures, accessibility and performance.
+path: documentation/
+heading: Documentation
+section: documentation
+schema: article
+---
+<article>
+  <nav class="toc" aria-label="On this page">
+    <strong>On this page</strong>
+    <ul>
+      <li><a href="#widget">The ExpandableAnimation widget</a></li>
+      <li><a href="#modes">Expansion modes</a></li>
+      <li><a href="#controller">Controller and lifecycle</a></li>
+      <li><a href="#motion">Duration, curves and spring physics</a></li>
+      <li><a href="#gestures">Drag-to-dismiss and gestures</a></li>
+      <li><a href="#transitions">Custom transitions</a></li>
+      <li><a href="#navigation">Navigation, themes and state</a></li>
+      <li><a href="#accessibility">Accessibility</a></li>
+      <li><a href="#performance">Performance</a></li>
+      <li><a href="#limitations">Known limitations</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="widget">The ExpandableAnimation widget</h2>
+  <p><code>ExpandableAnimation</code> shows its <code>child</code> in place. When expanded, the child is hidden
+  in place (keeping its size), and a morphing surface animates from the child's bounds to the expanded bounds
+  while the collapsed and expanded content cross-fade.</p>
+  <table>
+    <thead><tr><th>Parameter</th><th>Default</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>child</code></td><td>required</td><td>The widget shown in place.</td></tr>
+      <tr><td><code>expandedBuilder</code></td><td>required</td><td>Builds the expanded view.</td></tr>
+      <tr><td><code>controller</code></td><td>internal</td><td>Expand and collapse from code; observe state.</td></tr>
+      <tr><td><code>mode</code></td><td><code>fullscreen()</code></td><td>Where the view expands to.</td></tr>
+      <tr><td><code>duration</code> / <code>reverseDuration</code></td><td>400 ms / same</td><td>Time-based motion.</td></tr>
+      <tr><td><code>curve</code> / <code>reverseCurve</code></td><td><code>easeInOutCubic</code> / same</td><td>Easing.</td></tr>
+      <tr><td><code>physics</code></td><td><code>null</code></td><td>Spring motion; overrides duration and curve.</td></tr>
+      <tr><td><code>borderRadius</code> / <code>expandedBorderRadius</code></td><td>square</td><td>Corner radius at each end.</td></tr>
+      <tr><td><code>collapsedColor</code> / <code>expandedColor</code></td><td>transparent</td><td>Surface color at each end.</td></tr>
+      <tr><td><code>backgroundColor</code>, <code>backgroundOpacity</code></td><td>black, 0.5</td><td>Scrim behind the expanded view.</td></tr>
+      <tr><td><code>backgroundBlur</code></td><td>0</td><td>Blur sigma behind the view (costly).</td></tr>
+      <tr><td><code>dismissOnBackgroundTap</code></td><td><code>true</code></td><td>Tap outside to close (dialog and sheet modes).</td></tr>
+      <tr><td><code>enableDragToDismiss</code>, <code>gestureConfig</code></td><td><code>true</code>, defaults</td><td>Interactive dismissal.</td></tr>
+      <tr><td><code>expandOnTap</code>, <code>enabled</code></td><td><code>true</code>, <code>true</code></td><td>Tap trigger and global enable switch.</td></tr>
+      <tr><td><code>hideSourceWhileExpanded</code></td><td><code>true</code></td><td>Hide the child in place while expanded.</td></tr>
+      <tr><td><code>useRootNavigator</code></td><td><code>true</code></td><td>Cover bottom bars and nested navigators.</td></tr>
+      <tr><td><code>respectReducedMotion</code></td><td><code>true</code></td><td>Instant transitions when the OS asks for less motion.</td></tr>
+      <tr><td><code>transitionBuilder</code></td><td>cross-fade</td><td>Compose the collapsed and expanded layers.</td></tr>
+      <tr><td><code>semanticLabel</code>, <code>backgroundSemanticLabel</code></td><td><code>null</code>, <code>'Close'</code></td><td>Screen reader labels.</td></tr>
+      <tr><td><code>onExpanded</code>, <code>onCollapsed</code>, <code>onPhaseChanged</code></td><td>—</td><td>Lifecycle callbacks.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="modes">Expansion modes</h2>
+<pre><code class="language-dart">// Fill the screen (default). useSafeArea stops at notches and system bars.
+const ExpandableAnimationMode.fullscreen(useSafeArea: false)
+
+// A centered panel: inset by margin, capped at maxSize, above the keyboard.
+const ExpandableAnimationMode.dialog(
+  margin: EdgeInsets.all(24),
+  maxSize: Size(560, 720),
+)
+
+// Partial expansion anchored to the bottom edge.
+const ExpandableAnimationMode.sheet(heightFactor: 0.6, maxWidth: 640)
+
+// Anything else: compute a Rect from the overlay size, safe area,
+// keyboard insets and the source bounds.
+ExpandableAnimationMode.custom(
+  (bounds) =&gt; Alignment.topRight.inscribe(
+    const Size(360, 480),
+    bounds.safeArea.deflate(16),
+  ),
+)</code></pre>
+  <p>The expanded bounds are recomputed on every layout, so they follow window resizes and orientation
+  changes. The source bounds are measured again when collapsing, so the view returns to wherever the child is
+  now.</p>
+
+  <h2 id="controller">Controller and lifecycle</h2>
+<pre><code class="language-dart">final controller = ExpandableAnimationController();
+
+await controller.expand();   // completes when expanded or interrupted
+await controller.collapse(); // completes when collapsed or interrupted
+controller.toggle();
+
+controller.phase;       // ExpandableAnimationPhase.collapsed / expanding / expanded / collapsing
+controller.progress;    // 0.0 – 1.0
+controller.isDragging;  // true during a dismiss drag
+controller.isAttached;  // attached to a mounted widget
+
+// Dispose it in the State that created it.
+controller.dispose();</code></pre>
+  <p>Without a controller, the widget creates one. Read it from either subtree with
+  <code>ExpandableAnimation.of(context)</code>. Interruptions reverse from the current position:
+  <code>collapse()</code> during an expansion, or <code>expand()</code> (or a tap) during a collapse.</p>
+
+  <h2 id="motion">Duration, curves and spring physics</h2>
+<pre><code class="language-dart">ExpandableAnimation(
+  duration: const Duration(milliseconds: 450),
+  curve: Curves.easeOutCubic,
+  reverseCurve: Curves.easeInCubic,
+  // ...or a spring, which replaces both:
+  physics: const ExpandableAnimationPhysics.spring(
+    stiffness: 200,
+    dampingRatio: 0.75, // below 1.0 overshoots
+  ),
+  // ...
+)</code></pre>
+  <p>Presets: <code>ExpandableAnimationPhysics.smooth</code> (no overshoot), <code>bouncy</code> and
+  <code>snappy</code>. The collapse always uses a critically damped version of the spring so the view never
+  shrinks past its source. <code>SpringCurve</code> is exported too, if you want spring-shaped curves
+  elsewhere.</p>
+
+  <h2 id="gestures">Drag-to-dismiss and gestures</h2>
+  <p>See the dedicated <a href="{{ROOT}}examples/drag-to-dismiss/">drag-to-dismiss guide</a>. In short:
+  drag down to dismiss; vertical scrollables scroll until they reach the top; <code>PopScope</code> can veto;
+  thresholds live in <code>ExpandableAnimationGestureConfig</code>.</p>
+
+  <h2 id="transitions">Custom transitions</h2>
+  <p>The <code>transitionBuilder</code> receives the clamped progress animation and the two layers. Each layer
+  fills the surface, laid out at its natural size and scaled to the surface width:</p>
+<pre><code class="language-dart">ExpandableAnimation(
+  transitionBuilder: (context, animation, collapsed, expanded) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        FadeTransition(
+          opacity: ReverseAnimation(CurvedAnimation(
+            parent: animation,
+            curve: const Interval(0, 0.3),
+          )),
+          child: collapsed,
+        ),
+        FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: const Interval(0.3, 0.7),
+          ),
+          child: expanded,
+        ),
+      ],
+    );
+  },
+  // ...
+)</code></pre>
+
+  <h2 id="navigation">Navigation, themes and state</h2>
+  <ul>
+    <li>The expanded view is a modal route on the root navigator (configurable). The back button, Escape and
+      <code>Navigator.pop</code> collapse it.</li>
+    <li>Inherited themes (<code>Theme</code>, <code>CupertinoTheme</code>, <code>IconTheme</code>,
+      <code>DefaultTextStyle</code> and others) are captured at the source and applied to the expanded view.</li>
+    <li>The child and the expanded content are separate widget instances. Keep shared state, such as music
+      playback, outside both — see the <a href="{{ROOT}}examples/expandable-music-player/">music player
+      example</a>.</li>
+    <li>Rebuilding the parent rebuilds the expanded view with the new <code>expandedBuilder</code>.</li>
+    <li>If the child is removed while expanded, the controller keeps working and the view fades out in place
+      when collapsed.</li>
+  </ul>
+
+  <h2 id="accessibility">Accessibility</h2>
+  <ul>
+    <li>The child is a focusable button activated by tap, Enter or Space; set <code>semanticLabel</code>.</li>
+    <li>Focus moves into the expanded view and returns afterwards; screen readers get a dismiss action.</li>
+    <li>Content is not interactive and hidden from screen readers until the expansion finishes.</li>
+    <li>Reduced motion makes transitions instant when <code>respectReducedMotion</code> is on.</li>
+  </ul>
+
+  <h2 id="performance">Performance</h2>
+  <ul>
+    <li>Both layers keep fixed constraints while the surface animates, so their subtrees are not re-laid out
+      every frame; only a scale transform changes.</li>
+    <li>The collapsed copy stops painting after the expansion finishes.</li>
+    <li><code>backgroundBlur</code> is the most expensive option; it is off by default.</li>
+    <li>No benchmark figures are published yet; profile on your target devices in profile mode.</li>
+  </ul>
+
+  <h2 id="limitations">Known limitations</h2>
+  <ul>
+    <li>Zoomable content (<code>InteractiveViewer</code>) competes with drag-to-dismiss.</li>
+    <li>Inherited widgets other than themes are not carried into the expanded view.</li>
+    <li>Dismissal is downward only.</li>
+  </ul>
+</article>

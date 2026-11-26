@@ -1,0 +1,63 @@
+---
+title: Flutter Card to Fullscreen Animation — Expandable Animation
+description: Animate a Flutter card into a fullscreen detail page with a smooth container transform, reverse animation and drag-to-dismiss.
+path: examples/card-to-fullscreen/
+heading: Flutter card to fullscreen animation
+section: examples
+schema: article
+---
+<article>
+  <p>A product card that grows into a full product page is one of the most common transitions in mobile
+  apps. Done by hand in Flutter, it usually needs a custom route, measured bounds, <code>Hero</code> tags for
+  each element and extra work to make the page dismissible with a gesture. With
+  <code>ExpandableAnimation</code> it is one wrapper.</p>
+
+  <h2>The problem</h2>
+  <ul>
+    <li>The card should appear to <em>become</em> the page, not slide a new page over it.</li>
+    <li>Closing the page should return the card to its exact place, even if the grid scrolled or the window
+      resized.</li>
+    <li>Users expect to swipe the page away, not only tap a back button.</li>
+  </ul>
+
+  <h2>The solution</h2>
+<pre><code class="language-dart">class ProductTile extends StatelessWidget {
+  const ProductTile({super.key, required this.product});
+
+  final Product product;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ExpandableAnimation(
+      borderRadius: BorderRadius.circular(20),
+      collapsedColor: scheme.surfaceContainerHigh,
+      expandedColor: scheme.surface,
+      semanticLabel: 'Open ${product.name}',
+      expandedBuilder: (context) =&gt; ProductDetailsPage(product: product),
+      child: ProductCard(product: product),
+    );
+  }
+}</code></pre>
+  <p>Inside the details page, add a close button:</p>
+<pre><code class="language-dart">IconButton(
+  tooltip: 'Close',
+  icon: const Icon(Icons.close),
+  onPressed: () =&gt; ExpandableAnimation.of(context).collapse(),
+)</code></pre>
+
+  <h2>How it behaves</h2>
+  <ul>
+    <li>The card's bounds, corner radius (20 → 0) and color morph to fill the screen while the card content
+      cross-fades into the page.</li>
+    <li>Drag the page down to shrink it; release past 20% of its height (or fling) to send it back.</li>
+    <li>The back button and Escape collapse it; a <code>PopScope</code> in the page can prevent that.</li>
+    <li>Put many tiles in a grid; each expands independently.</li>
+  </ul>
+  <p class="callout">Tip: on large windows a full-width page can feel heavy. Use
+  <code>mode: const ExpandableAnimationMode.dialog()</code> to open a centered panel instead.</p>
+
+  <h2>Try it</h2>
+  <p>Open the <a href="{{ROOT}}demo/#/product-card">product card demo</a>, or read about
+  <a href="{{ROOT}}examples/container-transform/">how the container transform works</a>.</p>
+</article>

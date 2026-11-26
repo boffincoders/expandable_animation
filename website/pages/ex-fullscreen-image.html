@@ -1,0 +1,53 @@
+---
+title: Flutter Fullscreen Image Transition from a Gallery Thumbnail
+description: Open a Flutter gallery thumbnail into a fullscreen image viewer and animate it back to its exact grid position, with drag-to-dismiss.
+path: examples/fullscreen-image/
+heading: Flutter fullscreen image transition
+section: examples
+schema: article
+---
+<article>
+  <p>Photo grids feel best when a thumbnail grows straight into the full image and shrinks back into its
+  exact cell. The key is to expand the surface to the image's final on-screen rectangle, not the whole screen,
+  so the picture itself morphs without any cross-fade offset.</p>
+
+  <h2>Expand to the image bounds</h2>
+<pre><code class="language-dart">Rect fitSquare(ExpandedBoundsContext bounds) {
+  final area = bounds.safeArea;
+  final side = area.shortestSide;
+  return Rect.fromCenter(center: area.center, width: side, height: side);
+}
+
+ExpandableAnimation(
+  mode: const ExpandableAnimationMode.custom(fitSquare),
+  borderRadius: BorderRadius.circular(10),
+  backgroundOpacity: 1, // solid black behind the photo
+  gestureConfig: const ExpandableAnimationGestureConfig(
+    minScale: 0.7,
+    dragResistance: 1, // the photo follows the finger exactly
+  ),
+  semanticLabel: 'Open photo',
+  expandedBuilder: (context) =&gt; PhotoViewer(photo: photo),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(10),
+    child: Image(image: photo.thumbnail, fit: BoxFit.cover),
+  ),
+)</code></pre>
+  <p>For non-square photos, compute the rectangle from the image's aspect ratio inside
+  <code>bounds.safeArea</code>, the same way <code>BoxFit.contain</code> would.</p>
+
+  <h2>Back navigation</h2>
+  <p>The viewer is a modal route: the Android back button, Escape and a tap on the black background
+  (<code>dismissOnBackgroundTap</code>) close it, and focus returns to the thumbnail. If the grid scrolled or
+  the thumbnail was removed while the viewer was open, the image returns to its new position or fades out in
+  place.</p>
+
+  <h2>Zoom</h2>
+  <p class="callout">Pinch-to-zoom inside the viewer (<code>InteractiveViewer</code>) competes with the drag
+  gesture. Built-in zoom coordination is on the roadmap; until then, set
+  <code>enableDragToDismiss: false</code> for zoomable viewers and rely on the close button, background tap and
+  back button.</p>
+
+  <h2>Try it</h2>
+  <p>Open the <a href="{{ROOT}}demo/#/photo-gallery">photo gallery demo</a>.</p>
+</article>

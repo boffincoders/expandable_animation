@@ -1,0 +1,54 @@
+---
+title: Flutter Expandable Widget Animation (Not an Accordion)
+description: Expand any Flutter widget into a larger fullscreen, dialog or sheet view with an animated transition, instead of expanding it inline like an accordion.
+path: examples/expandable-widget/
+heading: Flutter expandable widget animation
+section: examples
+schema: article
+---
+<article>
+  <p>"Expandable widget" means two different things in Flutter. <code>ExpansionTile</code> and accordion
+  packages grow a widget <em>inline</em>, pushing the content below it down. <code>ExpandableAnimation</code>
+  does the other thing: it lifts a widget out of the layout and expands it into a <em>separate, larger
+  view</em> — fullscreen, a centered panel or a bottom sheet.</p>
+
+  <h2>When to use which</h2>
+  <table>
+    <thead><tr><th>You want</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>A section that reveals more lines in place</td><td><code>ExpansionTile</code>, <code>AnimatedSize</code></td></tr>
+      <tr><td>A card that becomes a detail page</td><td><code>ExpandableAnimation</code> (fullscreen)</td></tr>
+      <tr><td>A tile that opens a focused panel</td><td><code>ExpandableAnimation</code> (dialog)</td></tr>
+      <tr><td>A banner that opens actions from the bottom</td><td><code>ExpandableAnimation</code> (sheet)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Expand any widget</h2>
+<pre><code class="language-dart">ExpandableAnimation(
+  mode: const ExpandableAnimationMode.sheet(heightFactor: 0.55),
+  borderRadius: BorderRadius.circular(20),
+  expandedBorderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+  expandedBuilder: (context) =&gt; NotificationSheet(notification: item),
+  child: NotificationBanner(notification: item),
+)</code></pre>
+  <p>The child can be anything: a <code>Container</code>, an image, a list tile, a chart. The package does not
+  care what it contains; it measures the child's bounds and morphs from there.</p>
+
+  <h2>Trigger it your way</h2>
+<pre><code class="language-dart">final controller = ExpandableAnimationController();
+
+ExpandableAnimation(
+  controller: controller,
+  expandOnTap: false, // only expand from code
+  expandedBuilder: (context) =&gt; const StatsDetails(),
+  child: const StatsTile(),
+);
+
+// Later, for example from a menu item:
+controller.expand();</code></pre>
+
+  <h2>Try it</h2>
+  <p>The <a href="{{ROOT}}demo/#/notifications">notifications demo</a> uses sheet mode and the
+  <a href="{{ROOT}}demo/#/profile-card">profile demo</a> uses dialog mode. See the
+  <a href="{{ROOT}}documentation/#modes">modes reference</a> for all options.</p>
+</article>

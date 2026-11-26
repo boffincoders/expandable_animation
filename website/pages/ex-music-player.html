@@ -1,0 +1,65 @@
+---
+title: Flutter Expandable Music Player with Drag-to-Dismiss
+description: Build a Flutter mini player that expands into a fullscreen music player, keeps playback state across the transition and dismisses with a drag.
+path: examples/expandable-music-player/
+heading: Flutter expandable music player
+section: examples
+schema: article
+---
+<article>
+  <p>Music apps put a compact player above the bottom navigation. Tapping it opens a full playback screen;
+  dragging that screen down returns it to the mini player. The tricky part is keeping playback consistent:
+  both players must show the same track and position, and audio must not restart when the view changes.</p>
+
+  <h2>Keep playback outside the transition</h2>
+  <p>The mini player and the full player are separate widgets, so store playback state above both and pass
+  it in:</p>
+<pre><code class="language-dart">class PlaybackModel extends ChangeNotifier {
+  Track track = tracks.first;
+  bool isPlaying = false;
+
+  void toggle() {
+    isPlaying = !isPlaying;
+    notifyListeners();
+  }
+}</code></pre>
+
+  <h2>Expand the mini player</h2>
+<pre><code class="language-dart">Scaffold(
+  body: const TrackList(),
+  bottomNavigationBar: SafeArea(
+    minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+    child: ExpandableAnimation(
+      controller: controller,
+      physics: ExpandableAnimationPhysics.smooth,
+      borderRadius: BorderRadius.circular(18),
+      collapsedColor: scheme.surfaceContainerHighest,
+      expandedColor: const Color(0xFF0E0E14),
+      semanticLabel: 'Open player',
+      expandedBuilder: (context) =&gt; FullPlayer(playback: playback),
+      child: MiniPlayer(playback: playback),
+    ),
+  ),
+)</code></pre>
+  <p>Both players listen to the same model with <code>ListenableBuilder</code>, so pressing pause in either
+  updates both, and the music keeps playing while the player morphs.</p>
+
+  <h2>Open from anywhere</h2>
+  <p>Selecting a track in the list can open the player through the controller:</p>
+<pre><code class="language-dart">onTap: () {
+  playback.select(index);
+  controller.expand();
+},</code></pre>
+
+  <h2>Dismissal</h2>
+  <ul>
+    <li>Drag the full player down: it shrinks, its corners round and the background fades.</li>
+    <li>Release past the threshold or fling downward to collapse it into the mini player.</li>
+    <li>A chevron button calls <code>ExpandableAnimation.of(context).collapse()</code> for users who don't
+      drag.</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <p>Open the <a href="{{ROOT}}demo/#/music-player">music player demo</a>. Related:
+  <a href="{{ROOT}}examples/drag-to-dismiss/">tuning drag-to-dismiss</a>.</p>
+</article>

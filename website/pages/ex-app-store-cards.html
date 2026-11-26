@@ -1,0 +1,59 @@
+---
+title: Flutter App Store-Style Card Animation
+description: Recreate the editorial card-to-article transition in Flutter with spring physics, background blur and pull-down-to-dismiss on scrollable content.
+path: examples/app-store-card-animation/
+heading: Flutter App Store-style card animation
+section: examples
+schema: article
+---
+<article>
+  <p>Editorial "today" cards are large, image-led cards that spring open into a full article. Scrolling the
+  article works normally; pulling down from the top shrinks the article back into a card. This guide builds an
+  original version of that interaction pattern with <code>ExpandableAnimation</code>.</p>
+
+  <h2>The card</h2>
+<pre><code class="language-dart">AspectRatio(
+  aspectRatio: 0.85,
+  child: ExpandableAnimation(
+    borderRadius: BorderRadius.circular(24),
+    physics: ExpandableAnimationPhysics.snappy,
+    backgroundBlur: 6,
+    backgroundOpacity: 0.3,
+    collapsedColor: story.colors.first,
+    expandedColor: Theme.of(context).colorScheme.surface,
+    semanticLabel: 'Read ${story.title}',
+    expandedBuilder: (context) =&gt; ArticlePage(story: story),
+    child: StoryCard(story: story),
+  ),
+)</code></pre>
+
+  <h2>The article</h2>
+  <p>The article starts with the same card artwork, so the morph reads as the card opening up, followed by
+  scrollable text:</p>
+<pre><code class="language-dart">CustomScrollView(
+  slivers: [
+    SliverToBoxAdapter(
+      child: SizedBox(height: headerHeight, child: StoryCard(story: story)),
+    ),
+    SliverPadding(
+      padding: const EdgeInsets.all(24),
+      sliver: SliverList.list(children: paragraphs),
+    ),
+  ],
+)</code></pre>
+
+  <h2>Scrolling versus dismissing</h2>
+  <ul>
+    <li>Scrolling down reads the article as usual.</li>
+    <li>Scrolling back up stops at the top like any list.</li>
+    <li>Pulling down <em>while at the top</em> shrinks the card and fades the background; release to dismiss
+      or let it spring back.</li>
+    <li>By default, scrollables inside the expanded view use clamping physics, so iOS bounce does not compete
+      with the pull-down. Set <code>clampScrollPhysics: false</code> in the gesture config to keep bouncing.</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <p>Open the <a href="{{ROOT}}demo/#/app-store-cards">App Store-style cards demo</a>. Related:
+  <a href="{{ROOT}}examples/morphing-animation/">spring morphing</a> and
+  <a href="{{ROOT}}examples/drag-to-dismiss/">drag-to-dismiss</a>.</p>
+</article>
