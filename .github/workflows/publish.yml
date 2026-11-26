@@ -1,0 +1,60 @@
+name: Publish to pub.dev
+
+# The only authoritative way to publish new versions. Uses pub.dev automated
+# publishing with GitHub OIDC (no stored credentials). Requirements:
+#   1. On pub.dev > Admin > Automated publishing, enable GitHub Actions for
+#      repository boffincoders/expandable_animation with tag pattern
+#      v{{version}} and require the 'pub.dev' environment.
+#   2. Create a 'pub.dev' environment in the repository settings with
+#      required reviewers, so every publish needs explicit approval.
+# The very first version must be published manually; see
+# scripts/publish.sh --initial.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: pub.dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      # Configures the short-lived OIDC credential for pub.dev.
+      - uses: dart-lang/setup-dart@e51d8e571e22473a2ddebf0ef8a2123f0ab2c02c # v1.7.1
+      - uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
+        with:
+          channel: stable
+          cache: true
+      - name: Verify tag and skip versions that are already published
+        id: check
+        run: |
+          version="$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '[:space:]')"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pubspec.yaml version $version"
+            exit 1
+          fi
+          if curl -fsSL https://pub.dev/api/packages/expandable_animation 2>/dev/null \
+              | grep -q "\"version\":\"$version\""; then
+            echo "::notice::Version $version is already on pub.dev; nothing to publish."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.skip != 'true'
+        run: flutter pub get
+      - if: steps.check.outputs.skip != 'true'
+        run: flutter test --exclude-tags golden
+      - if: steps.check.outputs.skip != 'true'
+        run: dart pub publish --dry-run
+      - if: steps.check.outputs.skip != 'true'
+        run: dart pub publish --force
