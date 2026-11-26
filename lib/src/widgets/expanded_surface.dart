@@ -36,8 +36,10 @@ class ExpandedSurface extends StatefulWidget {
 
 class _ExpandedSurfaceState extends State<ExpandedSurface>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _settleController =
-      AnimationController.unbounded(vsync: this)..addListener(_handleSettle);
+  // Created in initState, never lazily: a lazy controller would first be
+  // created inside dispose() when no drag happened, which looks up the
+  // (already deactivated) TickerMode.
+  late final AnimationController _settleController;
 
   final ValueNotifier<double> _dragOffset = ValueNotifier<double>(0);
 
@@ -62,6 +64,8 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   @override
   void initState() {
     super.initState();
+    _settleController = AnimationController.unbounded(vsync: this)
+      ..addListener(_handleSettle);
     _createCurves();
     _route.config.addListener(_handleConfigChanged);
     _route.capturedThemes.addListener(_handleConfigChanged);
