@@ -12,17 +12,21 @@ source "$(dirname "$0")/lib/common.sh"
 
 usage() {
   sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
-  echo "Usage: ./scripts/publish.sh [--dry-run | --verify | --initial]"
+  echo "Usage: ./scripts/publish.sh [--dry-run | --verify | --initial] [--yes]"
+  echo "  --yes  answer the confirmation prompt with yes (for non-interactive runs)"
 }
 
 mode="dry-run"
-case "${1:-}" in
-  ""|--dry-run) mode="dry-run" ;;
-  --verify) mode="verify" ;;
-  --initial) mode="initial" ;;
-  -h|--help) usage; exit 0 ;;
-  *) usage; fail "Unknown option: $1" ;;
-esac
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) mode="dry-run" ;;
+    --verify) mode="verify" ;;
+    --initial) mode="initial" ;;
+    --yes) ASSUME_YES=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage; fail "Unknown option: $arg" ;;
+  esac
+done
 
 require dart flutter curl
 version="$(package_version)"

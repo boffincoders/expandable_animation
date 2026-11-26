@@ -53,8 +53,13 @@ is_semver() {
 }
 
 # Asks a yes/no question; succeeds only on an explicit "y" or "yes".
+# Set ASSUME_YES=1 (the scripts' --yes flag) to accept non-interactively.
 confirm() {
   local answer
+  if [[ "${ASSUME_YES:-0}" == "1" ]]; then
+    printf '%s [y/N] y (--yes)\n' "$1"
+    return 0
+  fi
   if [[ ! -t 0 ]]; then
     fail "Confirmation required but stdin is not a terminal: $1"
   fi

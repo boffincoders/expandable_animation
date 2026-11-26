@@ -10,13 +10,14 @@ source "$(dirname "$0")/lib/common.sh"
 
 usage() {
   cat <<USAGE
-Usage: ./scripts/release.sh (--patch | --minor | --major | --version X.Y.Z) [--dry-run] [--skip-ci]
+Usage: ./scripts/release.sh (--patch | --minor | --major | --version X.Y.Z) [--dry-run] [--skip-ci] [--yes]
 
   --patch / --minor / --major   Bump from the current pubspec.yaml version.
   --version X.Y.Z               Release an explicit version (may equal the
                                 current one, for example the first release).
   --dry-run                     Show what would happen; change nothing.
   --skip-ci                     Skip ./scripts/ci.sh (not recommended).
+  --yes                         Answer the push confirmation with yes.
   -h, --help                    Show this help.
 
 Before tagging, CHANGELOG.md must contain either '## Unreleased' (renamed to
@@ -31,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --version) explicit="${2:?--version needs a value}"; shift ;;
     --dry-run) dry_run=true ;;
     --skip-ci) skip_ci=true ;;
+    --yes) ASSUME_YES=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage; fail "Unknown option: $1" ;;
   esac
