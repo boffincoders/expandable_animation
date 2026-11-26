@@ -1,0 +1,39 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A small, complete code sample that shows the problem.
+      render: dart
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: flutter
+    attributes:
+      label: flutter --version
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: platforms
+    attributes:
+      label: Platforms
+      multiple: true
+      options: [Android, iOS, Web, macOS, Windows, Linux]
