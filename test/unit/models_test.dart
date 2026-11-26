@@ -82,6 +82,36 @@ void main() {
       expect(rect.left, 300);
     });
 
+    test('dialog and sheet stay above the keyboard', () {
+      const ExpandedBoundsContext withKeyboard = ExpandedBoundsContext(
+        overlaySize: Size(400, 800),
+        padding: EdgeInsets.only(top: 40, bottom: 20),
+        viewInsets: EdgeInsets.only(bottom: 300),
+        sourceRect: Rect.zero,
+      );
+      expect(withKeyboard.visibleArea, const Rect.fromLTRB(0, 40, 400, 500));
+      final Rect sheet = const ExpandableAnimationMode.sheet(heightFactor: 0.5)
+          .resolve(withKeyboard);
+      expect(sheet.bottom, 500);
+      expect(sheet.top, 100);
+      final Rect dialog = const ExpandableAnimationMode.dialog(
+        margin: EdgeInsets.zero,
+      ).resolve(withKeyboard);
+      expect(dialog.bottom, lessThanOrEqualTo(500));
+
+      const ExpandedBoundsContext tiny = ExpandedBoundsContext(
+        overlaySize: Size(400, 800),
+        padding: EdgeInsets.only(top: 40),
+        viewInsets: EdgeInsets.only(bottom: 790),
+        sourceRect: Rect.zero,
+      );
+      expect(tiny.visibleArea.height, 0);
+      expect(
+        const ExpandableAnimationMode.sheet().resolve(tiny).height,
+        0,
+      );
+    });
+
     test('custom delegates to the resolver', () {
       Rect resolver(ExpandedBoundsContext context) =>
           context.sourceRect.inflate(10);

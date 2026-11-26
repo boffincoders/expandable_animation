@@ -304,6 +304,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       ExpandedBoundsContext(
         overlaySize: overlaySize,
         padding: mediaQuery.padding,
+        viewInsets: mediaQuery.viewInsets,
         sourceRect: _route.sourceRect,
       ),
     );
@@ -334,6 +335,8 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
         padding: paddingWithinRect(mediaQuery.padding, target, overlaySize),
         viewPadding:
             paddingWithinRect(mediaQuery.viewPadding, target, overlaySize),
+        viewInsets:
+            paddingWithinRect(mediaQuery.viewInsets, target, overlaySize),
       ),
       child: expanded,
     );

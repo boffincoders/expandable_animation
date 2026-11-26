@@ -16,6 +16,7 @@ class ExpandedBoundsContext {
     required this.overlaySize,
     required this.padding,
     required this.sourceRect,
+    this.viewInsets = EdgeInsets.zero,
   });
 
   /// The size of the navigator overlay that hosts the expanded view.
@@ -31,22 +32,40 @@ class ExpandedBoundsContext {
   /// the moment the expansion started.
   final Rect sourceRect;
 
+  /// The parts of the overlay obscured by system UI such as the on-screen
+  /// keyboard. Taken from [MediaQueryData.viewInsets].
+  final EdgeInsets viewInsets;
+
   /// The overlay bounds with [padding] removed.
   Rect get safeArea => padding.deflateRect(Offset.zero & overlaySize);
+
+  /// The overlay bounds with both [padding] and [viewInsets] removed: the
+  /// area that is neither under system bars nor under the keyboard.
+  Rect get visibleArea {
+    final Rect safe = safeArea;
+    return Rect.fromLTRB(
+      safe.left,
+      safe.top,
+      safe.right,
+      math.max(safe.top,
+          math.min(safe.bottom, overlaySize.height - viewInsets.bottom)),
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
       other is ExpandedBoundsContext &&
       other.overlaySize == overlaySize &&
       other.padding == padding &&
-      other.sourceRect == sourceRect;
+      other.sourceRect == sourceRect &&
+      other.viewInsets == viewInsets;
 
   @override
-  int get hashCode => Object.hash(overlaySize, padding, sourceRect);
+  int get hashCode => Object.hash(overlaySize, padding, sourceRect, viewInsets);
 
   @override
   String toString() => 'ExpandedBoundsContext(overlaySize: $overlaySize, '
-      'padding: $padding, sourceRect: $sourceRect)';
+      'padding: $padding, sourceRect: $sourceRect, viewInsets: $viewInsets)';
 }
 
 /// Describes where an `ExpandableAnimation` expands to.
@@ -87,7 +106,8 @@ abstract class ExpandableAnimationMode {
   ///
   /// The panel is inset from the safe area by [margin] and never grows beyond
   /// [maxSize]. On a phone this is close to fullscreen; on a tablet or desktop
-  /// window it becomes a floating panel.
+  /// window it becomes a floating panel. It shrinks to stay above the
+  /// on-screen keyboard.
   const factory ExpandableAnimationMode.dialog({
     EdgeInsets margin,
     Size maxSize,
@@ -96,7 +116,8 @@ abstract class ExpandableAnimationMode {
   /// Expands to a panel anchored to the bottom edge.
   ///
   /// [heightFactor] is the fraction of the overlay height the panel covers,
-  /// between 0 and 1. The panel never extends above the top safe-area inset.
+  /// between 0 and 1. The panel never extends above the top safe-area inset,
+  /// and it rides on top of the on-screen keyboard when one is shown.
   /// [maxWidth] limits the width on wide screens; the panel is centered
   /// horizontally.
   const factory ExpandableAnimationMode.sheet({
@@ -158,7 +179,7 @@ class _DialogMode extends ExpandableAnimationMode {
 
   @override
   Rect resolve(ExpandedBoundsContext context) {
-    final Rect available = margin.deflateRect(context.safeArea);
+    final Rect available = margin.deflateRect(context.visibleArea);
     final Size size = Size(
       math.max(0, math.min(maxSize.width, available.width)),
       math.max(0, math.min(maxSize.height, available.height)),
@@ -196,12 +217,13 @@ class _SheetMode extends ExpandableAnimationMode {
   Rect resolve(ExpandedBoundsContext context) {
     final Size size = context.overlaySize;
     final double width = math.min(maxWidth, size.width);
-    final double top = math.max(
-      context.padding.top,
-      size.height - size.height * heightFactor,
+    final double bottom = size.height - context.viewInsets.bottom;
+    final double top = math.min(
+      bottom,
+      math.max(context.padding.top, bottom - size.height * heightFactor),
     );
     final double left = (size.width - width) / 2;
-    return Rect.fromLTRB(left, top, left + width, size.height);
+    return Rect.fromLTRB(left, top, left + width, bottom);
   }
 
   @override

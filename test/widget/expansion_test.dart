@@ -1,3 +1,7 @@
+// Transitions are started without awaiting so tests can pump individual
+// frames and inspect intermediate states.
+// ignore_for_file: unawaited_futures
+
 import 'package:expandable_animation/expandable_animation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,10 +39,12 @@ void main() {
 
     await tester.pump(duration ~/ 2);
     final Rect mid = tester.getRect(surfaceFinder);
-    expect(mid, rectMoreOrLessEquals(
-      Rect.lerp(source, const Rect.fromLTWH(0, 0, 400, 800), 0.5)!,
-      epsilon: 1,
-    ));
+    expect(
+        mid,
+        rectMoreOrLessEquals(
+          Rect.lerp(source, const Rect.fromLTWH(0, 0, 400, 800), 0.5)!,
+          epsilon: 1,
+        ));
 
     await tester.pumpAndSettle();
     expect(tester.getRect(surfaceFinder), const Rect.fromLTWH(0, 0, 400, 800));
@@ -402,7 +408,8 @@ void main() {
     );
     await tester.tap(find.byKey(sourceKey));
     await tester.pumpAndSettle();
-    expect(tester.getRect(surfaceFinder), const Rect.fromLTWH(0, 400, 400, 400));
+    expect(
+        tester.getRect(surfaceFinder), const Rect.fromLTWH(0, 400, 400, 400));
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
     expect(isRouteShown(), isTrue);
@@ -426,7 +433,9 @@ void main() {
     await tester.pump();
     await tester.pump(duration ~/ 2);
     final ColoredBox surface = tester.widget<ColoredBox>(
-      find.descendant(of: surfaceFinder, matching: find.byType(ColoredBox)).first,
+      find
+          .descendant(of: surfaceFinder, matching: find.byType(ColoredBox))
+          .first,
     );
     expect(surface.color.r, closeTo(0.5, 0.02));
   });
@@ -734,8 +743,7 @@ void main() {
     expect(tester.getRect(surfaceFinder), const Rect.fromLTRB(0, 40, 400, 780));
   });
 
-  testWidgets('custom transition builder is used',
-      (WidgetTester tester) async {
+  testWidgets('custom transition builder is used', (WidgetTester tester) async {
     usePhoneSurface(tester);
     await tester.pumpWidget(
       harness(
@@ -974,11 +982,11 @@ void main() {
   testWidgets('debugFillProperties describes the configuration',
       (WidgetTester tester) async {
     final DiagnosticPropertiesBuilder builder = DiagnosticPropertiesBuilder();
-    ExpandableAnimation(
+    const ExpandableAnimation(
       enabled: false,
       enableDragToDismiss: false,
       expandedBuilder: expandedPage,
-      child: const SizedBox(),
+      child: SizedBox(),
     ).debugFillProperties(builder);
     final List<String> description = builder.properties
         .where((DiagnosticsNode node) => !node.isFiltered(DiagnosticLevel.info))

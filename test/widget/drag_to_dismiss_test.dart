@@ -1,3 +1,7 @@
+// Transitions are started without awaiting so tests can pump individual
+// frames and inspect intermediate states.
+// ignore_for_file: unawaited_futures
+
 import 'package:expandable_animation/expandable_animation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
