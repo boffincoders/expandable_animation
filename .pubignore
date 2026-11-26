@@ -1,0 +1,11 @@
+# Files excluded from the published pub.dev package.
+.github/
+.idea/
+.vscode/
+docs/
+website/
+scripts/
+coverage/
+build/
+test/golden/failures/
+pubspec.lock

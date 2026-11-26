@@ -1,0 +1,28 @@
+name: expandable_animation
+description: >-
+  Flutter widget-to-fullscreen and card expansion animations with container
+  morphing, spring physics and interactive drag-to-dismiss.
+version: 0.1.0
+homepage: https://boffincoders.github.io/expandable_animation/
+repository: https://github.com/boffincoders/expandable_animation
+issue_tracker: https://github.com/boffincoders/expandable_animation/issues
+
+topics:
+  - animation
+  - transition
+  - expandable
+  - fullscreen
+  - gesture
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
