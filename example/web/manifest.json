@@ -1,11 +1,11 @@
 {
-    "name": "expandable_animation_example",
-    "short_name": "expandable_animation_example",
+    "name": "Expandable Animation demo",
+    "short_name": "Expandable",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Showcase for the expandable_animation Flutter package.",
+    "background_color": "#FBFAFF",
+    "theme_color": "#5B4BD6",
+    "description": "Interactive demo of the expandable_animation Flutter package.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
