@@ -77,7 +77,8 @@ info "Publishing is permanent: a version can be retracted but never replaced or 
 confirm "Publish $name $version to pub.dev now?" || fail "Cancelled"
 export_dir="$(export_package_tree)"
 trap 'rm -rf "$export_dir"' EXIT
-(cd "$export_dir" && run dart pub publish)
+# The confirmation above is the gate; --force skips pub's second prompt.
+(cd "$export_dir" && run dart pub publish --force)
 ok "Published $version."
 info "Next: run ./scripts/release.sh --version $version to tag it and create the GitHub release,"
 info "then enable automated publishing on pub.dev (see .github/workflows/publish.yml)."
