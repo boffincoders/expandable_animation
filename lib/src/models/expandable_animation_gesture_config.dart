@@ -1,0 +1,146 @@
+import 'package:flutter/widgets.dart';
+
+/// Configures interactive drag-to-dismiss on an expanded view.
+///
+/// Drag-to-dismiss is turned on with `ExpandableAnimation.enableDragToDismiss`;
+/// this object tunes how it feels.
+///
+/// The user drags the expanded view downwards. The view follows the finger,
+/// shrinks towards [minScale] and the background fades. When the finger
+/// lifts, the view is dismissed if either:
+///
+/// * the drag distance is at least [dismissThreshold] times the expanded
+///   height, or
+/// * the downward fling velocity is at least [velocityThreshold].
+///
+/// Otherwise the view springs back to its expanded state. A fast upward fling
+/// always cancels the dismissal.
+///
+/// ```dart
+/// ExpandableAnimation(
+///   gestureConfig: const ExpandableAnimationGestureConfig(
+///     dismissThreshold: 0.15,
+///     velocityThreshold: 600,
+///     enableHapticFeedback: false,
+///   ),
+///   expandedBuilder: (context) => const PlayerScreen(),
+///   child: const MiniPlayer(),
+/// )
+/// ```
+@immutable
+class ExpandableAnimationGestureConfig {
+  /// Creates a drag-to-dismiss configuration.
+  const ExpandableAnimationGestureConfig({
+    this.dismissThreshold = 0.2,
+    this.velocityThreshold = 700.0,
+    this.minScale = 0.85,
+    this.dragResistance = 0.6,
+    this.enableHapticFeedback = true,
+    this.dismissFromScrollableContent = true,
+    this.clampScrollPhysics = true,
+  })  : assert(
+          dismissThreshold > 0 && dismissThreshold <= 1,
+          'dismissThreshold must be in the range (0, 1].',
+        ),
+        assert(velocityThreshold > 0, 'velocityThreshold must be positive.'),
+        assert(
+          minScale > 0 && minScale <= 1,
+          'minScale must be in the range (0, 1].',
+        ),
+        assert(
+          dragResistance > 0 && dragResistance <= 1,
+          'dragResistance must be in the range (0, 1].',
+        );
+
+  /// The fraction of the expanded view's height the user must drag before
+  /// releasing dismisses it. Defaults to `0.2`.
+  final double dismissThreshold;
+
+  /// The downward fling velocity, in logical pixels per second, that
+  /// dismisses the view regardless of drag distance. Defaults to `700`.
+  final double velocityThreshold;
+
+  /// The scale the expanded view shrinks towards as the drag progresses.
+  /// `1.0` disables scaling. Defaults to `0.85`.
+  final double minScale;
+
+  /// How closely the expanded view follows the finger, between 0 and 1.
+  ///
+  /// `1.0` moves the view one pixel per pixel dragged; smaller values make
+  /// the drag feel heavier. Defaults to `0.6`.
+  final double dragResistance;
+
+  /// Whether to play a light haptic tick when the drag crosses the dismiss
+  /// threshold in either direction. Has no effect on platforms without
+  /// haptics. Defaults to `true`.
+  final bool enableHapticFeedback;
+
+  /// Whether pulling down on vertically scrollable content that is already
+  /// scrolled to its top starts a dismissal.
+  ///
+  /// When `false`, only drags on non-scrolling parts of the expanded view
+  /// dismiss it. Defaults to `true`.
+  final bool dismissFromScrollableContent;
+
+  /// Whether scrollables inside the expanded view that do not set explicit
+  /// physics use [ClampingScrollPhysics].
+  ///
+  /// Clamping prevents iOS-style overscroll bounce at the top edge from
+  /// competing with the dismiss gesture, so the pull-down feels like one
+  /// continuous motion. Scrollables with explicit physics keep them.
+  /// Defaults to `true`.
+  final bool clampScrollPhysics;
+
+  /// Creates a copy of this configuration with the given fields replaced.
+  ExpandableAnimationGestureConfig copyWith({
+    double? dismissThreshold,
+    double? velocityThreshold,
+    double? minScale,
+    double? dragResistance,
+    bool? enableHapticFeedback,
+    bool? dismissFromScrollableContent,
+    bool? clampScrollPhysics,
+  }) {
+    return ExpandableAnimationGestureConfig(
+      dismissThreshold: dismissThreshold ?? this.dismissThreshold,
+      velocityThreshold: velocityThreshold ?? this.velocityThreshold,
+      minScale: minScale ?? this.minScale,
+      dragResistance: dragResistance ?? this.dragResistance,
+      enableHapticFeedback: enableHapticFeedback ?? this.enableHapticFeedback,
+      dismissFromScrollableContent:
+          dismissFromScrollableContent ?? this.dismissFromScrollableContent,
+      clampScrollPhysics: clampScrollPhysics ?? this.clampScrollPhysics,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ExpandableAnimationGestureConfig &&
+      other.dismissThreshold == dismissThreshold &&
+      other.velocityThreshold == velocityThreshold &&
+      other.minScale == minScale &&
+      other.dragResistance == dragResistance &&
+      other.enableHapticFeedback == enableHapticFeedback &&
+      other.dismissFromScrollableContent == dismissFromScrollableContent &&
+      other.clampScrollPhysics == clampScrollPhysics;
+
+  @override
+  int get hashCode => Object.hash(
+        dismissThreshold,
+        velocityThreshold,
+        minScale,
+        dragResistance,
+        enableHapticFeedback,
+        dismissFromScrollableContent,
+        clampScrollPhysics,
+      );
+
+  @override
+  String toString() => 'ExpandableAnimationGestureConfig('
+      'dismissThreshold: $dismissThreshold, '
+      'velocityThreshold: $velocityThreshold, minScale: $minScale, '
+      'dragResistance: $dragResistance, '
+      'enableHapticFeedback: $enableHapticFeedback, '
+      'dismissFromScrollableContent: $dismissFromScrollableContent, '
+      'clampScrollPhysics: $clampScrollPhysics)';
+}
