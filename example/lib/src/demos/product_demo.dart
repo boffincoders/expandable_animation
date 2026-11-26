@@ -165,6 +165,12 @@ class ProductCard extends StatelessWidget {
   }
 }
 
+/// Keeps the text column readable on wide windows.
+double _sidePadding(BuildContext context) {
+  final double width = MediaQuery.sizeOf(context).width;
+  return width > 760 ? (width - 712) / 2 : 24;
+}
+
 class ProductDetailsPage extends StatefulWidget {
   const ProductDetailsPage({super.key, required this.product});
 
@@ -189,8 +195,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           CustomScrollView(
             slivers: <Widget>[
               SliverToBoxAdapter(
-                child: AspectRatio(
-                  aspectRatio: 1.1,
+                child: SizedBox(
+                  // Square-ish on phones, capped on wide windows.
+                  height: (MediaQuery.sizeOf(context).width / 1.1)
+                      .clamp(0.0, MediaQuery.sizeOf(context).height * 0.5),
                   child: GeneratedArt(
                     seed: product.seed,
                     colors: product.colors,
@@ -199,7 +207,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 ),
               ),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(24, 24, 24, 120 + padding.bottom),
+                padding: EdgeInsets.fromLTRB(
+                  _sidePadding(context),
+                  24,
+                  _sidePadding(context),
+                  120 + padding.bottom,
+                ),
                 sliver: SliverList.list(
                   children: <Widget>[
                     Text(product.category.toUpperCase(),
@@ -266,8 +279,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             child: const CollapseButton(onDark: true),
           ),
           Positioned(
-            left: 24,
-            right: 24,
+            left: _sidePadding(context),
+            right: _sidePadding(context),
             bottom: padding.bottom + 24,
             child: FilledButton.icon(
               style: FilledButton.styleFrom(

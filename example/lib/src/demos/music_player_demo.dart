@@ -255,19 +255,26 @@ class FullPlayer extends StatelessWidget {
                             const SizedBox(width: 48),
                           ],
                         ),
-                        const Spacer(),
-                        AspectRatio(
-                          aspectRatio: 1,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(28),
-                            child: GeneratedArt(
-                              seed: track.seed,
-                              colors: track.colors,
-                              semanticLabel: 'Artwork for ${track.title}',
+                        // The artwork takes whatever height is left, so the
+                        // player fits short landscape and desktop windows.
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: AspectRatio(
+                                aspectRatio: 1,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(28),
+                                  child: GeneratedArt(
+                                    seed: track.seed,
+                                    colors: track.colors,
+                                    semanticLabel: 'Artwork for ${track.title}',
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                        const Spacer(),
                         Text(track.title, style: theme.textTheme.headlineSmall),
                         const SizedBox(height: 4),
                         Text(track.artist,
@@ -317,7 +324,7 @@ class FullPlayer extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const Spacer(flex: 2),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
