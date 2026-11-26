@@ -105,3 +105,8 @@ a.card:hover { transform: translateY(-2px); border-color: var(--accent); }
 
 .site-footer { border-top: 1px solid var(--border); padding: 28px 0; color: var(--muted); font-size: 15px; }
 .footer-inner p { margin: 4px 0; }
+
+.media-row { display: flex; flex-wrap: wrap; gap: 16px; margin: 24px 0; }
+.media-row figure { margin: 0; flex: 1 1 200px; max-width: 260px; }
+.media-row img { width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); background: var(--surface); }
+.media-row figcaption { font-size: 14px; color: var(--muted); margin-top: 6px; }

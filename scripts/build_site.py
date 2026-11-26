@@ -212,6 +212,9 @@ def main() -> None:
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
     shutil.copytree(WEBSITE / "assets", OUT / "assets")
+    media = ROOT / "screenshots"
+    if media.is_dir():
+        shutil.copytree(media, OUT / "assets" / "media")
 
     layout = (WEBSITE / "layout.html").read_text(encoding="utf-8")
     today = dt.date.today().isoformat()
