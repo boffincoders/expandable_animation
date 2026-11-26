@@ -1,3 +1,5 @@
+include: package:flutter_lints/flutter.yaml
+
 analyzer:
   exclude:
     - build/**
@@ -7,7 +9,11 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
-include: package:flutter_lints/flutter.yaml
+  errors:
+    # Flutter 3.48+ deprecates package:flutter/material.dart in favor of
+    # package:material_ui, which is unavailable on the minimum supported
+    # Flutter (3.27). Revisit when the minimum SDK is raised.
+    deprecated_member_use: ignore
 
 linter:
   rules:

@@ -1,0 +1,9 @@
+include: ../analysis_options.yaml
+
+analyzer:
+  errors:
+    # Flutter 3.48+ deprecates importing package:flutter/material.dart in
+    # favor of package:material_ui, which does not exist on the minimum
+    # supported Flutter (3.27). Tests use Material widgets as a host app only;
+    # the library itself imports package:flutter/widgets.dart.
+    deprecated_member_use: ignore
