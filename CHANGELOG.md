@@ -3,7 +3,7 @@
 All notable changes to this package are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.2.0
 
 - Added `ExpandableAnimationGestureConfig.dismissDirections` and
   `ExpandableAnimationDismissDirection`: dismiss by dragging down, up, left
