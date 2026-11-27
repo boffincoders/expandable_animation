@@ -27,6 +27,7 @@ Useful subsets:
 ./scripts/ci.sh --test       # format, analyze and tests
 ./scripts/ci.sh --coverage   # tests with coverage report
 ./scripts/ci.sh --web        # build the web demo
+./scripts/ci.sh --devices    # integration tests on iOS Simulator + Android emulator
 ./scripts/ci.sh --help
 ```
 
@@ -38,7 +39,9 @@ commands directly: `dart format --set-exit-if-changed .`, `flutter analyze`,
 
 - Keep the public API small and documented. Every public member needs a doc
   comment with an example where useful.
-- Add or update tests with every behavior change. Golden tests are tagged
+- Add or update tests with every behavior change, and run
+  `./scripts/test_devices.sh` so the example's integration tests pass on both
+  an iOS Simulator and an Android emulator. Golden tests are tagged
   `golden`; regenerate them on macOS with
   `flutter test --tags golden --update-goldens`.
 - Update `README.md`, `CHANGELOG.md` and the example app when behavior

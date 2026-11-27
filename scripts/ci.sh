@@ -12,11 +12,13 @@ With no options, runs the standard checks:
 
 Options:
   --all          Standard checks plus integration tests, goldens (macOS only),
+                 the iOS Simulator and Android emulator runs (macOS only),
                  the web demo build and the documentation website build.
   --test         Format, analyze and unit/widget tests only.
   --coverage     Tests with coverage and the minimum coverage gate.
   --integration  Example integration tests (headless).
   --goldens      Golden tests (generated on macOS).
+  --devices      Integration tests on an iOS Simulator and Android emulator.
   --web          Build the web demo.
   --docs         Build the documentation website (without the demo).
   --package      Package metadata validation and publish dry run.
@@ -32,11 +34,12 @@ setup=true
 selected=()
 for arg in "$@"; do
   case "$arg" in
-    --all) selected+=(format analyze coverage package integration goldens web docs) ;;
+    --all) selected+=(format analyze coverage package integration goldens devices web docs) ;;
     --test) selected+=(format analyze test) ;;
     --coverage) selected+=(coverage) ;;
     --integration) selected+=(integration) ;;
     --goldens) selected+=(goldens) ;;
+    --devices) selected+=(devices) ;;
     --web) selected+=(web) ;;
     --docs) selected+=(docs) ;;
     --package) selected+=(package) ;;
@@ -71,6 +74,13 @@ fi
 if has integration; then
   step "Running example integration tests"
   (cd "$EXAMPLE_DIR" && run flutter test integration_test -d flutter-tester)
+fi
+if has devices; then
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    "$S/test_devices.sh"
+  else
+    warn "Skipping simulator/emulator tests: the iOS Simulator needs macOS"
+  fi
 fi
 has package && "$S/validate_package.sh"
 has web && "$S/build_web.sh"

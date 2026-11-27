@@ -82,6 +82,38 @@ void main() {
     expect(tester.getRect(thumb), before);
   });
 
+  testWidgets('photo viewer zooms, then flicks away upward',
+      (WidgetTester tester) async {
+    await openDemo(tester, '/photo-gallery');
+    await tester.tap(find.bySemanticsLabel('Open photo 3'));
+    await tester.pumpAndSettle();
+    expect(find.text('Photo 3'), findsOneWidget);
+
+    final Finder viewer = find.byType(InteractiveViewer);
+    final Offset center = tester.getCenter(viewer);
+    double scale() => tester
+        .widget<InteractiveViewer>(viewer)
+        .transformationController!
+        .value
+        .getMaxScaleOnAxis();
+    Future<void> doubleTap() async {
+      await tester.tapAt(center);
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tapAt(center);
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    await doubleTap();
+    expect(scale(), greaterThan(2));
+    await doubleTap();
+    expect(scale(), closeTo(1, 0.01));
+
+    await tester.flingFrom(center, const Offset(0, -260), 2000);
+    await tester.pumpAndSettle();
+    expect(find.text('Photo 3'), findsNothing);
+  });
+
   testWidgets('repeated and rapid expansion never stacks views',
       (WidgetTester tester) async {
     await openDemo(tester, '/profile-card');
@@ -112,9 +144,10 @@ void main() {
     final ExpandableAnimationController controller =
         _controllerOf(tester, card.first);
     controller.expand();
+    // Check immediately rather than after a timed pump: on real devices
+    // time passes for real, and a slow device may finish the expansion first.
+    expect(controller.phase, ExpandableAnimationPhase.expanding);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(controller.isAnimating, isTrue);
 
     // System back while expanding collapses the card.
     await tester.binding.handlePopRoute();
