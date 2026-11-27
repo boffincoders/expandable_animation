@@ -30,9 +30,9 @@ class PhotoGalleryDemo extends StatelessWidget {
   Widget build(BuildContext context) {
     return DemoScaffold(
       title: 'Fullscreen image transition',
-      description: 'Tap a thumbnail to open it over a black background, then '
-          'drag it down, tap outside it or press back to send it to its exact '
-          'place in the grid.',
+      description: 'Tap a thumbnail to open it over a black background. Pinch '
+          'or double tap to zoom. Drag it down, tap outside it or press back '
+          'to send it to its exact place in the grid.',
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -82,10 +82,13 @@ class PhotoViewer extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
-        GeneratedArt(
-          seed: 100 + index,
-          colors: colors,
-          semanticLabel: 'Photo ${index + 1}',
+        // Pinch or double tap to zoom; drag down to dismiss when zoomed out.
+        ExpandableAnimationZoomable(
+          child: GeneratedArt(
+            seed: 100 + index,
+            colors: colors,
+            semanticLabel: 'Photo ${index + 1}',
+          ),
         ),
         const Positioned(
           top: 12,

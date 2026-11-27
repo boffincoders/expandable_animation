@@ -35,6 +35,7 @@ class PlaygroundSettings {
     this.velocityThreshold = 700,
     this.minScale = 0.85,
     this.haptics = true,
+    this.matchVelocity = true,
   });
 
   final PlaygroundMode mode;
@@ -51,6 +52,7 @@ class PlaygroundSettings {
   final double velocityThreshold;
   final double minScale;
   final bool haptics;
+  final bool matchVelocity;
 
   ExpandableAnimationMode get expandableMode => switch (mode) {
         PlaygroundMode.fullscreen => const ExpandableAnimationMode.fullscreen(),
@@ -71,6 +73,7 @@ class PlaygroundSettings {
         velocityThreshold: velocityThreshold,
         minScale: minScale,
         enableHapticFeedback: haptics,
+        matchReleaseVelocity: matchVelocity,
       );
 
   PlaygroundSettings copyWith({
@@ -88,6 +91,7 @@ class PlaygroundSettings {
     double? velocityThreshold,
     double? minScale,
     bool? haptics,
+    bool? matchVelocity,
   }) {
     return PlaygroundSettings(
       mode: mode ?? this.mode,
@@ -104,6 +108,7 @@ class PlaygroundSettings {
       velocityThreshold: velocityThreshold ?? this.velocityThreshold,
       minScale: minScale ?? this.minScale,
       haptics: haptics ?? this.haptics,
+      matchVelocity: matchVelocity ?? this.matchVelocity,
     );
   }
 
@@ -157,6 +162,7 @@ class PlaygroundSettings {
           'velocityThreshold: ${n(velocityThreshold)},',
         if (minScale != d.minScale) 'minScale: ${n(minScale)},',
         if (!haptics) 'enableHapticFeedback: false,',
+        if (!matchVelocity) 'matchReleaseVelocity: false,',
       ];
       if (gesture.isNotEmpty) {
         lines.add('gestureConfig: const ExpandableAnimationGestureConfig(\n'
@@ -530,6 +536,12 @@ class _Controls extends StatelessWidget {
             title: const Text('Haptic feedback'),
             value: s.haptics,
             onChanged: (bool v) => onChanged(s.copyWith(haptics: v)),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Carry flick speed into the collapse'),
+            value: s.matchVelocity,
+            onChanged: (bool v) => onChanged(s.copyWith(matchVelocity: v)),
           ),
         ],
         const SizedBox(height: 8),
