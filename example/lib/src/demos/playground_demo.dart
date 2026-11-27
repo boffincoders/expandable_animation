@@ -1,4 +1,5 @@
 import 'package:expandable_animation/expandable_animation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -36,6 +37,10 @@ class PlaygroundSettings {
     this.minScale = 0.85,
     this.haptics = true,
     this.matchVelocity = true,
+    this.directions = const <ExpandableAnimationDismissDirection>{
+      ExpandableAnimationDismissDirection.down,
+    },
+    this.hoverScale = 1.0,
   });
 
   final PlaygroundMode mode;
@@ -53,6 +58,8 @@ class PlaygroundSettings {
   final double minScale;
   final bool haptics;
   final bool matchVelocity;
+  final Set<ExpandableAnimationDismissDirection> directions;
+  final double hoverScale;
 
   ExpandableAnimationMode get expandableMode => switch (mode) {
         PlaygroundMode.fullscreen => const ExpandableAnimationMode.fullscreen(),
@@ -74,6 +81,7 @@ class PlaygroundSettings {
         minScale: minScale,
         enableHapticFeedback: haptics,
         matchReleaseVelocity: matchVelocity,
+        dismissDirections: directions,
       );
 
   PlaygroundSettings copyWith({
@@ -92,6 +100,8 @@ class PlaygroundSettings {
     double? minScale,
     bool? haptics,
     bool? matchVelocity,
+    Set<ExpandableAnimationDismissDirection>? directions,
+    double? hoverScale,
   }) {
     return PlaygroundSettings(
       mode: mode ?? this.mode,
@@ -109,6 +119,8 @@ class PlaygroundSettings {
       minScale: minScale ?? this.minScale,
       haptics: haptics ?? this.haptics,
       matchVelocity: matchVelocity ?? this.matchVelocity,
+      directions: directions ?? this.directions,
+      hoverScale: hoverScale ?? this.hoverScale,
     );
   }
 
@@ -152,6 +164,9 @@ class PlaygroundSettings {
     if (backgroundOpacity != d.backgroundOpacity) {
       lines.add('backgroundOpacity: ${n(backgroundOpacity)},');
     }
+    if (hoverScale != d.hoverScale) {
+      lines.add('hoverScale: ${n(hoverScale)},');
+    }
     if (!enableDragToDismiss) {
       lines.add('enableDragToDismiss: false,');
     } else {
@@ -163,6 +178,8 @@ class PlaygroundSettings {
         if (minScale != d.minScale) 'minScale: ${n(minScale)},',
         if (!haptics) 'enableHapticFeedback: false,',
         if (!matchVelocity) 'matchReleaseVelocity: false,',
+        if (!setEquals(directions, d.directions))
+          'dismissDirections: {${directions.map((ExpandableAnimationDismissDirection e) => 'ExpandableAnimationDismissDirection.${e.name}').join(', ')}},',
       ];
       if (gesture.isNotEmpty) {
         lines.add('gestureConfig: const ExpandableAnimationGestureConfig(\n'
@@ -255,6 +272,7 @@ class _Preview extends StatelessWidget {
           backgroundOpacity: settings.backgroundOpacity,
           enableDragToDismiss: settings.enableDragToDismiss,
           gestureConfig: settings.gestureConfig,
+          hoverScale: settings.hoverScale,
           collapsedColor: scheme.primaryContainer,
           expandedColor: scheme.surfaceContainer,
           semanticLabel: 'Open preview',
@@ -494,6 +512,15 @@ class _Controls extends StatelessWidget {
           format: (double v) => v.toStringAsFixed(2),
           onChanged: (double v) => onChanged(s.copyWith(backgroundOpacity: v)),
         ),
+        _SliderTile(
+          label: 'Hover and focus scale',
+          value: s.hoverScale,
+          min: 1,
+          max: 1.1,
+          divisions: 10,
+          format: (double v) => v.toStringAsFixed(2),
+          onChanged: (double v) => onChanged(s.copyWith(hoverScale: v)),
+        ),
         const SizedBox(height: 12),
         Text('Gestures', style: text.titleMedium),
         SwitchListTile(
@@ -542,6 +569,28 @@ class _Controls extends StatelessWidget {
             title: const Text('Carry flick speed into the collapse'),
             value: s.matchVelocity,
             onChanged: (bool v) => onChanged(s.copyWith(matchVelocity: v)),
+          ),
+          const SizedBox(height: 4),
+          const Text('Dismiss directions'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: <Widget>[
+              for (final ExpandableAnimationDismissDirection direction
+                  in ExpandableAnimationDismissDirection.values)
+                FilterChip(
+                  label: Text(direction.name),
+                  selected: s.directions.contains(direction),
+                  onSelected: (bool selected) {
+                    final Set<ExpandableAnimationDismissDirection> next =
+                        <ExpandableAnimationDismissDirection>{...s.directions};
+                    selected ? next.add(direction) : next.remove(direction);
+                    if (next.isNotEmpty) {
+                      onChanged(s.copyWith(directions: next));
+                    }
+                  },
+                ),
+            ],
           ),
         ],
         const SizedBox(height: 8),

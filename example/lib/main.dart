@@ -1,3 +1,4 @@
+import 'package:expandable_animation/expandable_animation.dart';
 import 'package:flutter/material.dart';
 
 import 'src/demos/app_store_cards_demo.dart';
@@ -120,14 +121,19 @@ class _ShowcaseAppState extends State<ShowcaseApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Expandable Animation showcase',
-      debugShowCheckedModeBanner: false,
-      themeMode: _themeMode,
-      theme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.light),
-      darkTheme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.dark),
-      initialRoute: widget.initialRoute ?? '/',
-      onGenerateRoute: _onGenerateRoute,
+    // App-wide defaults for every ExpandableAnimation in the showcase.
+    return ExpandableAnimationTheme(
+      data: const ExpandableAnimationThemeData(hoverScale: 1.02),
+      child: MaterialApp(
+        title: 'Expandable Animation showcase',
+        debugShowCheckedModeBanner: false,
+        themeMode: _themeMode,
+        theme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.light),
+        darkTheme:
+            ThemeData(colorSchemeSeed: _seed, brightness: Brightness.dark),
+        initialRoute: widget.initialRoute ?? '/',
+        onGenerateRoute: _onGenerateRoute,
+      ),
     );
   }
 }

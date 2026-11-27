@@ -31,8 +31,8 @@ class PhotoGalleryDemo extends StatelessWidget {
     return DemoScaffold(
       title: 'Fullscreen image transition',
       description: 'Tap a thumbnail to open it over a black background. Pinch '
-          'or double tap to zoom. Drag it down, tap outside it or press back '
-          'to send it to its exact place in the grid.',
+          'or double tap to zoom. Flick it up or down, tap outside it or '
+          'press back to send it to its exact place in the grid.',
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -56,6 +56,11 @@ class PhotoGalleryDemo extends StatelessWidget {
             gestureConfig: const ExpandableAnimationGestureConfig(
               minScale: 0.7,
               dragResistance: 1,
+              // Photos can be flicked away up or down.
+              dismissDirections: <ExpandableAnimationDismissDirection>{
+                ExpandableAnimationDismissDirection.down,
+                ExpandableAnimationDismissDirection.up,
+              },
             ),
             semanticLabel: 'Open photo ${index + 1}',
             expandedBuilder: (BuildContext context) =>
