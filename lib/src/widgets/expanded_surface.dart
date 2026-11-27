@@ -8,12 +8,14 @@ import 'package:flutter/widgets.dart';
 
 import '../animation/expandable_animation_physics.dart';
 import '../gestures/dismiss_drag_scope.dart';
+import '../models/expandable_animation_dismiss_direction.dart';
 import '../models/expandable_animation_gesture_config.dart';
 import '../models/expandable_animation_mode.dart';
 import '../transitions/expandable_animation_route.dart';
 import '../transitions/surface_geometry.dart';
 import 'expandable_animation.dart';
 import 'expandable_animation_scope.dart';
+import 'resolved_expandable_animation.dart';
 
 /// The spring used to settle a cancelled dismiss drag back into place.
 const SpringDescription _kSettleSpring = SpringDescription(
@@ -56,6 +58,12 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
 
   bool _dragging = false;
 
+  /// The axis the current drag is locked to.
+  Axis? _dragAxis;
+
+  /// The direction the current drag dismisses in, once it has moved.
+  ExpandableAnimationDismissDirection? _dragDirection;
+
   /// Pointers that descendants asked to keep out of the dismiss drag.
   final Set<int> _blockedPointers = <int>{};
   bool _pastThreshold = false;
@@ -70,7 +78,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   /// the motion, so applying the reverse curve on top would distort it).
   double get _progress =>
       _route.isSpringCollapse ? _route.animation!.value : _curved.value;
-  ExpandableAnimation get _config => _route.config.value;
+  ResolvedExpandableAnimation get _config => _route.config.value;
   ExpandableAnimationGestureConfig get _gestures => _config.gestureConfig;
 
   @override
@@ -85,7 +93,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   }
 
   void _createCurves() {
-    final ExpandableAnimation config = _config;
+    final ResolvedExpandableAnimation config = _config;
     final bool spring = config.physics != null && !_route.reduceMotion;
     _curvePhysics = config.physics;
     _curveCurve = config.curve;
@@ -99,7 +107,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   }
 
   void _handleConfigChanged() {
-    final ExpandableAnimation config = _config;
+    final ResolvedExpandableAnimation config = _config;
     if (_curvePhysics != config.physics ||
         _curveCurve != config.curve ||
         _curveReverse != config.reverseCurve) {
@@ -132,6 +140,12 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       _route.animation!.status == AnimationStatus.completed &&
       _route.releaseGeometry == null;
 
+  /// The size of the expanded surface along the current drag axis.
+  double get _dragExtent => dragExtent(
+        _target,
+        _dragDirection ?? ExpandableAnimationDismissDirection.down,
+      );
+
   void _handleSettle() {
     _dragOffset.value = math.max(0, _settleController.value);
     _reportDragProgress();
@@ -142,44 +156,70 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       return;
     }
     _route.dragProgress.value =
-        dragProgress(offset: _dragOffset.value, extent: _target.height);
+        dragProgress(offset: _dragOffset.value, extent: _dragExtent);
   }
 
-  bool _startDrag() {
+  /// Starts a dismiss drag along [axis]. Returns whether it was accepted.
+  bool _startDrag(Axis axis) {
     if (_dragging) {
-      return true;
+      return _dragAxis == axis;
     }
-    if (!_canDrag) {
+    if (!_canDrag || !_gestures.allowsAxis(axis)) {
+      return false;
+    }
+    if (_dragOffset.value > 0 && _dragAxis != axis) {
+      // Still settling back from a drag along the other axis.
       return false;
     }
     _settleController.stop();
     _dragging = true;
+    _dragAxis = axis;
     _pastThreshold = _isPastThreshold(_dragOffset.value);
     _route.isDragging.value = true;
     return true;
   }
 
-  void _handleDragStart(DragStartDetails details) => _startDrag();
-
-  void _handleDragUpdate(DragUpdateDetails details) =>
-      _updateDrag(details.delta.dy);
-
-  void _handleDragEnd(DragEndDetails details) =>
-      _endDrag(details.primaryVelocity ?? 0);
-
-  void _handleDragCancel() => _endDrag(0);
-
   bool _isPastThreshold(double offset) =>
-      offset >= _target.height * _gestures.dismissThreshold;
+      offset >= _dragExtent * _gestures.dismissThreshold;
 
-  void _updateDrag(double delta) {
+  /// The component of a screen-space vector in the current drag direction.
+  double _alongDirection(Offset vector) {
+    final ExpandableAnimationDismissDirection? direction = _dragDirection;
+    if (direction == null) {
+      return 0;
+    }
+    final Offset unit = direction.unit;
+    return vector.dx * unit.dx + vector.dy * unit.dy;
+  }
+
+  /// Moves the drag by a screen-space [delta].
+  void _updateDrag(Offset delta) {
     if (!_dragging) {
       return;
     }
-    final double offset = math.max(0, _dragOffset.value + delta);
-    _dragOffset.value = offset;
+    final Axis axis = _dragAxis!;
+    if (_dragDirection == null) {
+      final double component = axis == Axis.vertical ? delta.dy : delta.dx;
+      if (component == 0) {
+        return;
+      }
+      final ExpandableAnimationDismissDirection direction =
+          ExpandableAnimationDismissDirection.fromDelta(axis, component);
+      if (!_gestures.dismissDirections.contains(direction)) {
+        return;
+      }
+      _dragDirection = direction;
+    }
+    final double next = _dragOffset.value + _alongDirection(delta);
+    if (next <= 0) {
+      // Back at the start: the next movement may pick the other direction.
+      _dragOffset.value = 0;
+      _dragDirection = null;
+    } else {
+      _dragOffset.value = next;
+    }
     _reportDragProgress();
-    final bool past = _isPastThreshold(offset);
+    final bool past = _isPastThreshold(_dragOffset.value);
     if (past != _pastThreshold) {
       _pastThreshold = past;
       if (_gestures.enableHapticFeedback) {
@@ -188,7 +228,9 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
     }
   }
 
-  void _endDrag(double velocity) {
+  /// Ends the drag with a screen-space [velocity] in logical pixels per
+  /// second.
+  void _endDrag(Offset velocity) {
     if (!_dragging) {
       return;
     }
@@ -197,31 +239,34 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       _route.isDragging.value = false;
     }
     final double offset = _dragOffset.value;
+    final double along = _alongDirection(velocity);
     final bool dismiss = shouldDismissDrag(
       offset: offset,
-      velocity: velocity,
-      extent: _target.height,
+      velocity: along,
+      extent: _dragExtent,
       config: _gestures,
     );
     if (dismiss && _dismissFromDrag(offset, velocity)) {
       return;
     }
-    _settleBack(offset, velocity);
+    _settleBack(offset, along);
   }
 
-  bool _dismissFromDrag(double offset, double velocity) {
-    final ExpandableAnimation config = _config;
+  bool _dismissFromDrag(double offset, Offset velocity) {
+    final ResolvedExpandableAnimation config = _config;
+    final ExpandableAnimationDismissDirection direction = _dragDirection!;
     final SurfaceGeometry released = dragSurfaceGeometry(
       expanded: SurfaceGeometry(
         rect: _target,
         borderRadius: config.expandedBorderRadius,
       ),
       offset: offset,
+      direction: direction,
       collapsedRadius: config.borderRadius,
       config: _gestures,
     );
     final double backgroundFactor =
-        1 - dragProgress(offset: offset, extent: _target.height);
+        1 - dragProgress(offset: offset, extent: _dragExtent);
     _route
       ..releaseGeometry = released
       ..releaseBackgroundFactor = backgroundFactor;
@@ -231,8 +276,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
         ..releaseBackgroundFactor = 1;
       return false;
     }
-    _dragOffset.value = 0;
-    _reportDragProgress();
+    _resetDrag();
     if (_gestures.matchReleaseVelocity && !_route.reduceMotion) {
       _route.collapseWithSpring(
         config.physics?.reverseDescription ??
@@ -267,39 +311,66 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
     }
     _dragOffset.value = 0;
     _reportDragProgress();
+    _dragDirection = null;
+    _dragAxis = null;
+  }
+
+  /// Converts a change in scroll position into the finger movement that
+  /// caused it, in screen coordinates.
+  static Offset _fingerDelta(ScrollMetrics metrics, double scrollDelta) {
+    return switch (metrics.axisDirection) {
+      AxisDirection.down => Offset(0, -scrollDelta),
+      AxisDirection.up => Offset(0, scrollDelta),
+      AxisDirection.right => Offset(-scrollDelta, 0),
+      AxisDirection.left => Offset(scrollDelta, 0),
+    };
+  }
+
+  bool _allowsFingerDelta(Axis axis, Offset delta) {
+    final double component = axis == Axis.vertical ? delta.dy : delta.dx;
+    return component != 0 &&
+        _gestures.dismissDirections.contains(
+          ExpandableAnimationDismissDirection.fromDelta(axis, component),
+        );
   }
 
   bool _handleScrollNotification(ScrollNotification notification) {
+    final ScrollMetrics metrics = notification.metrics;
+    final Axis axis = metrics.axis;
     if (!_gestures.dismissFromScrollableContent ||
         notification.depth != 0 ||
-        notification.metrics.axis != Axis.vertical) {
+        !_gestures.allowsAxis(axis) ||
+        (_dragging && _dragAxis != axis)) {
       return false;
     }
-    final ScrollMetrics metrics = notification.metrics;
     if (notification is OverscrollNotification) {
       if (notification.dragDetails == null) {
         return false;
       }
-      if (!_dragging &&
-          notification.overscroll < 0 &&
-          metrics.pixels <= metrics.minScrollExtent) {
-        _startDrag();
+      final Offset delta = _fingerDelta(metrics, notification.overscroll);
+      if (!_dragging && _allowsFingerDelta(axis, delta)) {
+        _startDrag(axis);
       }
-      _updateDrag(-notification.overscroll);
+      _updateDrag(delta);
     } else if (notification is ScrollUpdateNotification) {
       if (notification.dragDetails == null) {
         return false;
       }
-      final double delta = notification.scrollDelta ?? 0;
+      final double scrollDelta = notification.scrollDelta ?? 0;
+      final Offset delta = _fingerDelta(metrics, scrollDelta);
       if (_dragging) {
-        _updateDrag(-delta);
-      } else if (delta < 0 && metrics.pixels < metrics.minScrollExtent) {
-        // Content with bouncing physics pulled past its top edge.
-        _startDrag();
-        _updateDrag(-delta);
+        _updateDrag(delta);
+      } else if ((metrics.pixels < metrics.minScrollExtent &&
+              scrollDelta < 0) ||
+          (metrics.pixels > metrics.maxScrollExtent && scrollDelta > 0)) {
+        // Content with bouncing physics pulled past one of its edges.
+        if (_allowsFingerDelta(axis, delta) && _startDrag(axis)) {
+          _updateDrag(delta);
+        }
       }
     } else if (notification is ScrollEndNotification) {
-      _endDrag(notification.dragDetails?.velocity.pixelsPerSecond.dy ?? 0);
+      _endDrag(
+          notification.dragDetails?.velocity.pixelsPerSecond ?? Offset.zero);
     }
     return false;
   }
@@ -307,9 +378,20 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   bool _handleIndicatorNotification(
     OverscrollIndicatorNotification notification,
   ) {
+    final Set<ExpandableAnimationDismissDirection> directions =
+        _gestures.dismissDirections;
+    // The leading edge of a regular scrollable is its top or start: pulling
+    // past it moves the finger down or right.
+    final bool edgeAllowed = notification.leading
+        ? directions.contains(ExpandableAnimationDismissDirection.down) ||
+            directions.contains(ExpandableAnimationDismissDirection.right)
+        : directions.contains(ExpandableAnimationDismissDirection.up) ||
+            directions.contains(ExpandableAnimationDismissDirection.left);
     if (notification.depth == 0 &&
-        notification.leading &&
-        (_dragging || (_canDrag && _gestures.dismissFromScrollableContent))) {
+        (_dragging ||
+            (_canDrag &&
+                edgeAllowed &&
+                _gestures.dismissFromScrollableContent))) {
       notification.disallowIndicator();
     }
     return false;
@@ -340,7 +422,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   }
 
   Widget _buildLayout(BuildContext context, BoxConstraints constraints) {
-    final ExpandableAnimation config = _config;
+    final ResolvedExpandableAnimation config = _config;
     final Size overlaySize = constraints.biggest;
     final MediaQueryData mediaQuery = MediaQuery.of(context);
     final Rect target = config.mode.resolve(
@@ -420,20 +502,28 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
             // Blank areas of the surface are draggable too.
             behavior: HitTestBehavior.opaque,
             gestures: <Type, GestureRecognizerFactory>{
-              _DismissDragGestureRecognizer:
-                  GestureRecognizerFactoryWithHandlers<
-                      _DismissDragGestureRecognizer>(
-                () => _DismissDragGestureRecognizer(
-                  isBlocked: _blockedPointers.contains,
-                  debugOwner: this,
+              if (_gestures.allowsAxis(Axis.vertical))
+                _VerticalDismissRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                        _VerticalDismissRecognizer>(
+                  () => _VerticalDismissRecognizer(
+                    isBlocked: _blockedPointers.contains,
+                    debugOwner: this,
+                  ),
+                  (_VerticalDismissRecognizer recognizer) =>
+                      _configureRecognizer(recognizer, Axis.vertical),
                 ),
-                (_DismissDragGestureRecognizer recognizer) {
-                  recognizer.onStart = _handleDragStart;
-                  recognizer.onUpdate = _handleDragUpdate;
-                  recognizer.onEnd = _handleDragEnd;
-                  recognizer.onCancel = _handleDragCancel;
-                },
-              ),
+              if (_gestures.allowsAxis(Axis.horizontal))
+                _HorizontalDismissRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                        _HorizontalDismissRecognizer>(
+                  () => _HorizontalDismissRecognizer(
+                    isBlocked: _blockedPointers.contains,
+                    debugOwner: this,
+                  ),
+                  (_HorizontalDismissRecognizer recognizer) =>
+                      _configureRecognizer(recognizer, Axis.horizontal),
+                ),
             },
             child: surfaceContent,
           ),
@@ -449,6 +539,15 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
     );
   }
 
+  void _configureRecognizer(DragGestureRecognizer recognizer, Axis axis) {
+    recognizer
+      ..onStart = ((DragStartDetails details) => _startDrag(axis))
+      ..onUpdate = ((DragUpdateDetails details) => _updateDrag(details.delta))
+      ..onEnd = ((DragEndDetails details) =>
+          _endDrag(details.velocity.pixelsPerSecond))
+      ..onCancel = (() => _endDrag(Offset.zero));
+  }
+
   Widget _wrapInherited(Widget child) {
     return _route.capturedThemes.value.wrap(
       ExpandableAnimationScope(
@@ -458,7 +557,8 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
     );
   }
 
-  Widget _buildFrame(ExpandableAnimation config, Rect target, Widget content) {
+  Widget _buildFrame(
+      ResolvedExpandableAnimation config, Rect target, Widget content) {
     final double t = _progress;
     final SurfaceGeometry? released = _route.releaseGeometry;
     final Rect destination = released?.rect ?? target;
@@ -478,14 +578,17 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
     if (released != null) {
       backgroundFactor *= _route.releaseBackgroundFactor;
     } else if (offset > 0) {
+      final ExpandableAnimationDismissDirection direction =
+          _dragDirection ?? ExpandableAnimationDismissDirection.down;
       geometry = dragSurfaceGeometry(
         expanded: geometry,
         offset: offset,
+        direction: direction,
         collapsedRadius: config.borderRadius,
         config: _gestures,
       );
-      backgroundFactor *=
-          1 - dragProgress(offset: offset, extent: target.height);
+      backgroundFactor *= 1 -
+          dragProgress(offset: offset, extent: dragExtent(target, direction));
     }
 
     final Color collapsedColor =
@@ -511,7 +614,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
     );
   }
 
-  Widget _buildBackground(ExpandableAnimation config, double factor) {
+  Widget _buildBackground(ResolvedExpandableAnimation config, double factor) {
     final Color base = config.backgroundColor;
     Widget background = ColoredBox(
       color: base.withValues(alpha: base.a * config.backgroundOpacity * factor),
@@ -542,10 +645,21 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   }
 }
 
-/// The surface's vertical drag recognizer, which ignores pointers that
+/// The surface's vertical dismiss recognizer, which ignores pointers that
 /// descendants have blocked (see [ExpandableDismissDragScope.blockPointer]).
-class _DismissDragGestureRecognizer extends VerticalDragGestureRecognizer {
-  _DismissDragGestureRecognizer({required this.isBlocked, super.debugOwner});
+class _VerticalDismissRecognizer extends VerticalDragGestureRecognizer {
+  _VerticalDismissRecognizer({required this.isBlocked, super.debugOwner});
+
+  final bool Function(int pointer) isBlocked;
+
+  @override
+  bool isPointerAllowed(PointerEvent event) =>
+      !isBlocked(event.pointer) && super.isPointerAllowed(event);
+}
+
+/// The horizontal counterpart of [_VerticalDismissRecognizer].
+class _HorizontalDismissRecognizer extends HorizontalDragGestureRecognizer {
+  _HorizontalDismissRecognizer({required this.isBlocked, super.debugOwner});
 
   final bool Function(int pointer) isBlocked;
 

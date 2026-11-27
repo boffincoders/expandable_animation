@@ -3,6 +3,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/widgets.dart';
 
+import '../models/expandable_animation_dismiss_direction.dart';
 import '../models/expandable_animation_gesture_config.dart';
 
 /// The fraction of the expanded height that corresponds to a full drag.
@@ -103,8 +104,8 @@ BorderRadius _nonNegative(BorderRadius radius) {
   );
 }
 
-/// The drag progress, from `0.0` to `1.0`, for a downward drag of [offset]
-/// logical pixels on a surface [extent] pixels tall.
+/// The drag progress, from `0.0` to `1.0`, for a drag of [offset] logical
+/// pixels on a surface [extent] pixels long along the drag axis.
 double dragProgress({required double offset, required double extent}) {
   if (extent <= 0) {
     return 0;
@@ -112,33 +113,55 @@ double dragProgress({required double offset, required double extent}) {
   return (offset / (extent * kFullDragExtentFraction)).clamp(0.0, 1.0);
 }
 
-/// Computes the geometry of an expanded surface being dragged downwards.
+/// The size of [rect] along the axis of [direction].
+double dragExtent(Rect rect, ExpandableAnimationDismissDirection direction) =>
+    direction.axis == Axis.vertical ? rect.height : rect.width;
+
+/// Computes the geometry of an expanded surface being dragged [offset]
+/// logical pixels in [direction] (downwards by default).
 ///
-/// The surface scales around its top center towards
-/// [ExpandableAnimationGestureConfig.minScale] and moves down by the drag
-/// [offset] multiplied by [ExpandableAnimationGestureConfig.dragResistance].
-/// Its corners round towards [collapsedRadius], or [kDragCornerRadius] when
-/// the collapsed widget has square corners.
+/// The surface scales towards [ExpandableAnimationGestureConfig.minScale],
+/// anchored at the edge it is moving away from and centered on the other
+/// axis, and moves by [offset] multiplied by
+/// [ExpandableAnimationGestureConfig.dragResistance]. Its corners round
+/// towards [collapsedRadius], or [kDragCornerRadius] when the collapsed
+/// widget has square corners.
 SurfaceGeometry dragSurfaceGeometry({
   required SurfaceGeometry expanded,
   required double offset,
   required BorderRadius collapsedRadius,
   required ExpandableAnimationGestureConfig config,
+  ExpandableAnimationDismissDirection direction =
+      ExpandableAnimationDismissDirection.down,
 }) {
   if (offset <= 0) {
     return expanded;
   }
   final Rect rect = expanded.rect;
-  final double progress = dragProgress(offset: offset, extent: rect.height);
+  final double progress =
+      dragProgress(offset: offset, extent: dragExtent(rect, direction));
   final double scale = lerpDouble(1.0, config.minScale, progress)!;
   final double width = rect.width * scale;
   final double height = rect.height * scale;
-  final double top = rect.top + offset * config.dragResistance;
+  final double shift = offset * config.dragResistance;
+  final Rect scaled = switch (direction) {
+    ExpandableAnimationDismissDirection.down => Rect.fromLTWH(
+        rect.center.dx - width / 2, rect.top + shift, width, height),
+    ExpandableAnimationDismissDirection.up => Rect.fromLTWH(
+        rect.center.dx - width / 2,
+        rect.bottom - height - shift,
+        width,
+        height),
+    ExpandableAnimationDismissDirection.right => Rect.fromLTWH(
+        rect.left + shift, rect.center.dy - height / 2, width, height),
+    ExpandableAnimationDismissDirection.left => Rect.fromLTWH(
+        rect.right - width - shift, rect.center.dy - height / 2, width, height),
+  };
   final BorderRadius dragRadius = collapsedRadius == BorderRadius.zero
       ? BorderRadius.circular(kDragCornerRadius)
       : collapsedRadius;
   return SurfaceGeometry(
-    rect: Rect.fromLTWH(rect.center.dx - width / 2, top, width, height),
+    rect: scaled,
     borderRadius:
         BorderRadius.lerp(expanded.borderRadius, dragRadius, progress)!,
     opacity: expanded.opacity,
@@ -147,9 +170,10 @@ SurfaceGeometry dragSurfaceGeometry({
 
 /// Decides whether releasing a dismiss drag should dismiss the view.
 ///
-/// [offset] is the downward drag distance and [velocity] the vertical
-/// release velocity in logical pixels per second (positive is downwards).
-/// [extent] is the expanded surface height.
+/// [offset] is the drag distance in the drag direction and [velocity] the
+/// release velocity in logical pixels per second (positive points in the
+/// drag direction). [extent] is the expanded surface size along the drag
+/// axis.
 bool shouldDismissDrag({
   required double offset,
   required double velocity,
@@ -172,28 +196,30 @@ bool shouldDismissDrag({
 /// progress per second (the whole collapse in 1/8 of a second).
 const double kMaxReleaseProgressVelocity = 8.0;
 
-/// Converts the vertical release velocity of a dismiss drag into the initial
-/// velocity of the collapse, in transition progress per second.
+/// Converts the release velocity of a dismiss drag into the initial velocity
+/// of the collapse, in transition progress per second.
 ///
-/// The surface moves at [fingerVelocity] (logical pixels per second,
-/// positive downwards) scaled by [dragResistance]. Only the part of that
-/// motion heading towards [source] speeds up the collapse; motion away from
-/// it is ignored rather than reversing the collapse. The result is never
-/// positive (progress decreases while collapsing) and its magnitude is
-/// capped at [kMaxReleaseProgressVelocity].
+/// The surface moves at [fingerVelocity] (logical pixels per second, screen
+/// coordinates) scaled by [dragResistance]. Only the part of that motion
+/// heading towards [source] speeds up the collapse; motion away from it is
+/// ignored rather than reversing the collapse. The result is never positive
+/// (progress decreases while collapsing) and its magnitude is capped at
+/// [kMaxReleaseProgressVelocity].
 double releaseProgressVelocity({
   required Rect released,
   required Rect? source,
-  required double fingerVelocity,
+  required Offset fingerVelocity,
   required double dragResistance,
 }) {
   final Offset toSource = (source ?? released).center - released.center;
   final double distance = toSource.distance;
-  if (distance < 1 || fingerVelocity == 0) {
+  if (distance < 1 || fingerVelocity == Offset.zero) {
     return 0;
   }
+  final Offset surfaceVelocity = fingerVelocity * dragResistance;
   final double towardsSource =
-      fingerVelocity * dragResistance * (toSource.dy / distance);
+      (surfaceVelocity.dx * toSource.dx + surfaceVelocity.dy * toSource.dy) /
+          distance;
   if (towardsSource <= 0) {
     return 0;
   }

@@ -1,17 +1,22 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+
+import 'expandable_animation_dismiss_direction.dart';
 
 /// Configures interactive drag-to-dismiss on an expanded view.
 ///
 /// Drag-to-dismiss is turned on with `ExpandableAnimation.enableDragToDismiss`;
 /// this object tunes how it feels.
 ///
-/// The user drags the expanded view downwards. The view follows the finger,
-/// shrinks towards [minScale] and the background fades. When the finger
-/// lifts, the view is dismissed if either:
+/// The user drags the expanded view in one of the [dismissDirections]
+/// (downwards by default). The view follows the finger, shrinks towards
+/// [minScale] and the background fades. When the finger lifts, the view is
+/// dismissed if either:
 ///
 /// * the drag distance is at least [dismissThreshold] times the expanded
-///   height, or
-/// * the downward fling velocity is at least [velocityThreshold].
+///   size along the drag axis, or
+/// * the fling velocity in the drag direction is at least
+///   [velocityThreshold].
 ///
 /// Otherwise the view springs back to its expanded state. A fast upward fling
 /// always cancels the dismissal.
@@ -39,6 +44,9 @@ class ExpandableAnimationGestureConfig {
     this.dismissFromScrollableContent = true,
     this.clampScrollPhysics = true,
     this.matchReleaseVelocity = true,
+    this.dismissDirections = const <ExpandableAnimationDismissDirection>{
+      ExpandableAnimationDismissDirection.down,
+    },
   })  : assert(
           dismissThreshold > 0 && dismissThreshold <= 1,
           'dismissThreshold must be in the range (0, 1].',
@@ -53,12 +61,13 @@ class ExpandableAnimationGestureConfig {
           'dragResistance must be in the range (0, 1].',
         );
 
-  /// The fraction of the expanded view's height the user must drag before
-  /// releasing dismisses it. Defaults to `0.2`.
+  /// The fraction of the expanded view's size along the drag axis (its
+  /// height for vertical drags, its width for horizontal drags) the user
+  /// must drag before releasing dismisses it. Defaults to `0.2`.
   final double dismissThreshold;
 
-  /// The downward fling velocity, in logical pixels per second, that
-  /// dismisses the view regardless of drag distance. Defaults to `700`.
+  /// The fling velocity in the drag direction, in logical pixels per second,
+  /// that dismisses the view regardless of drag distance. Defaults to `700`.
   final double velocityThreshold;
 
   /// The scale the expanded view shrinks towards as the drag progresses.
@@ -102,6 +111,20 @@ class ExpandableAnimationGestureConfig {
   /// Defaults to `true`.
   final bool matchReleaseVelocity;
 
+  /// The directions in which a drag dismisses the view. Defaults to
+  /// [ExpandableAnimationDismissDirection.down]. An empty set disables
+  /// dragging, like `ExpandableAnimation.enableDragToDismiss: false`.
+  ///
+  /// Each drag locks to the axis it starts on. When both directions of an
+  /// axis are allowed (for example up and down), the drag can switch
+  /// between them by passing back through the starting point.
+  final Set<ExpandableAnimationDismissDirection> dismissDirections;
+
+  /// Whether any direction along [axis] is allowed.
+  bool allowsAxis(Axis axis) => dismissDirections.any(
+        (ExpandableAnimationDismissDirection d) => d.axis == axis,
+      );
+
   /// Creates a copy of this configuration with the given fields replaced.
   ExpandableAnimationGestureConfig copyWith({
     double? dismissThreshold,
@@ -112,6 +135,7 @@ class ExpandableAnimationGestureConfig {
     bool? dismissFromScrollableContent,
     bool? clampScrollPhysics,
     bool? matchReleaseVelocity,
+    Set<ExpandableAnimationDismissDirection>? dismissDirections,
   }) {
     return ExpandableAnimationGestureConfig(
       dismissThreshold: dismissThreshold ?? this.dismissThreshold,
@@ -123,6 +147,7 @@ class ExpandableAnimationGestureConfig {
           dismissFromScrollableContent ?? this.dismissFromScrollableContent,
       clampScrollPhysics: clampScrollPhysics ?? this.clampScrollPhysics,
       matchReleaseVelocity: matchReleaseVelocity ?? this.matchReleaseVelocity,
+      dismissDirections: dismissDirections ?? this.dismissDirections,
     );
   }
 
@@ -136,7 +161,8 @@ class ExpandableAnimationGestureConfig {
       other.enableHapticFeedback == enableHapticFeedback &&
       other.dismissFromScrollableContent == dismissFromScrollableContent &&
       other.clampScrollPhysics == clampScrollPhysics &&
-      other.matchReleaseVelocity == matchReleaseVelocity;
+      other.matchReleaseVelocity == matchReleaseVelocity &&
+      setEquals(other.dismissDirections, dismissDirections);
 
   @override
   int get hashCode => Object.hash(
@@ -148,6 +174,7 @@ class ExpandableAnimationGestureConfig {
         dismissFromScrollableContent,
         clampScrollPhysics,
         matchReleaseVelocity,
+        Object.hashAllUnordered(dismissDirections),
       );
 
   @override
@@ -158,5 +185,6 @@ class ExpandableAnimationGestureConfig {
       'enableHapticFeedback: $enableHapticFeedback, '
       'dismissFromScrollableContent: $dismissFromScrollableContent, '
       'clampScrollPhysics: $clampScrollPhysics, '
-      'matchReleaseVelocity: $matchReleaseVelocity)';
+      'matchReleaseVelocity: $matchReleaseVelocity, '
+      'dismissDirections: ${dismissDirections.map((ExpandableAnimationDismissDirection d) => d.name).join(', ')})';
 }

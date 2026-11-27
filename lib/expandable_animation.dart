@@ -23,6 +23,8 @@ export 'src/animation/expandable_animation_physics.dart'
     show ExpandableAnimationPhysics, SpringCurve;
 export 'src/controllers/expandable_animation_controller.dart'
     show ExpandableAnimationController;
+export 'src/models/expandable_animation_dismiss_direction.dart'
+    show ExpandableAnimationDismissDirection;
 export 'src/models/expandable_animation_gesture_config.dart'
     show ExpandableAnimationGestureConfig;
 export 'src/models/expandable_animation_mode.dart'
@@ -31,5 +33,7 @@ export 'src/models/expandable_animation_phase.dart'
     show ExpandableAnimationPhase;
 export 'src/widgets/expandable_animation.dart'
     show ExpandableAnimation, ExpandableAnimationTransitionBuilder;
+export 'src/widgets/expandable_animation_theme.dart'
+    show ExpandableAnimationTheme, ExpandableAnimationThemeData;
 export 'src/widgets/expandable_animation_zoomable.dart'
     show ExpandableAnimationZoomable;

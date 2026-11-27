@@ -142,7 +142,7 @@ void main() {
         releaseProgressVelocity(
           released: released,
           source: const Rect.fromLTWH(100, 800, 200, 100),
-          fingerVelocity: 1000,
+          fingerVelocity: const Offset(0, 1000),
           dragResistance: 1,
         ),
         lessThan(0),
@@ -152,7 +152,7 @@ void main() {
         releaseProgressVelocity(
           released: released,
           source: const Rect.fromLTWH(100, 0, 200, 50),
-          fingerVelocity: 1000,
+          fingerVelocity: const Offset(0, 1000),
           dragResistance: 1,
         ),
         0,
@@ -162,7 +162,7 @@ void main() {
         releaseProgressVelocity(
           released: released,
           source: null,
-          fingerVelocity: 1000,
+          fingerVelocity: const Offset(0, 1000),
           dragResistance: 1,
         ),
         0,
@@ -171,7 +171,7 @@ void main() {
         releaseProgressVelocity(
           released: released,
           source: const Rect.fromLTWH(100, 800, 200, 100),
-          fingerVelocity: 1e9,
+          fingerVelocity: const Offset(0, 1e9),
           dragResistance: 1,
         ),
         -kMaxReleaseProgressVelocity,

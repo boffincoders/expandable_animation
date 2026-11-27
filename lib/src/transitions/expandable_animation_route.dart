@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 
 import '../animation/expandable_animation_physics.dart';
 import '../controllers/expandable_animation_controller.dart';
-import '../widgets/expandable_animation.dart';
 import '../widgets/expanded_surface.dart';
+import '../widgets/resolved_expandable_animation.dart';
 import 'surface_geometry.dart';
 
 /// The modal route that hosts an expanded `ExpandableAnimation`.
@@ -16,7 +16,7 @@ import 'surface_geometry.dart';
 class ExpandableAnimationRoute extends PopupRoute<void> {
   /// Creates a route for an expansion that starts from [sourceRect].
   ExpandableAnimationRoute({
-    required ExpandableAnimation config,
+    required ResolvedExpandableAnimation config,
     required this.sourceRect,
     required this.measureSource,
     required CapturedThemes capturedThemes,
@@ -26,7 +26,7 @@ class ExpandableAnimationRoute extends PopupRoute<void> {
     required this.onValueChanged,
     required this.onDisposed,
     this.initialValue = 0,
-  })  : config = ValueNotifier<ExpandableAnimation>(config),
+  })  : config = ValueNotifier<ResolvedExpandableAnimation>(config),
         capturedThemes = ValueNotifier<CapturedThemes>(capturedThemes),
         source = ValueNotifier<Rect?>(sourceRect);
 
@@ -59,7 +59,7 @@ class ExpandableAnimationRoute extends PopupRoute<void> {
   final double initialValue;
 
   /// The widget configuration. Updated when the owning widget rebuilds.
-  final ValueNotifier<ExpandableAnimation> config;
+  final ValueNotifier<ResolvedExpandableAnimation> config;
 
   /// Inherited themes captured from the source widget's context.
   final ValueNotifier<CapturedThemes> capturedThemes;
@@ -89,7 +89,7 @@ class ExpandableAnimationRoute extends PopupRoute<void> {
   /// Whether [dispose] has been called.
   bool get isDisposed => _disposed;
 
-  ExpandableAnimation get _config => config.value;
+  ResolvedExpandableAnimation get _config => config.value;
 
   @override
   Duration get transitionDuration {

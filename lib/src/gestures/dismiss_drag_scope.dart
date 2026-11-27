@@ -19,17 +19,17 @@ class ExpandableDismissDragScope extends InheritedWidget {
     required super.child,
   });
 
-  /// Starts a dismiss drag. Returns whether the drag was accepted; it is
-  /// rejected while the view is still animating or drag-to-dismiss is off.
-  final bool Function() onStart;
+  /// Starts a dismiss drag along an axis. Returns whether the drag was
+  /// accepted; it is rejected while the view is still animating, when no
+  /// dismiss direction lies on that axis, or when drag-to-dismiss is off.
+  final bool Function(Axis axis) onStart;
 
-  /// Moves the dismiss drag by a vertical delta in logical pixels (positive
-  /// is downwards).
-  final ValueChanged<double> onUpdate;
+  /// Moves the dismiss drag by a screen-space delta in logical pixels.
+  final ValueChanged<Offset> onUpdate;
 
-  /// Ends the dismiss drag with a vertical velocity in logical pixels per
-  /// second (positive is downwards).
-  final ValueChanged<double> onEnd;
+  /// Ends the dismiss drag with a screen-space velocity in logical pixels
+  /// per second.
+  final ValueChanged<Offset> onEnd;
 
   /// Keeps the surface's own dismiss drag from competing for [pointer],
   /// for example while content is zoomed in and should pan instead.

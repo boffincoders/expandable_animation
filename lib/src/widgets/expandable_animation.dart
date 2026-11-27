@@ -11,6 +11,8 @@ import '../models/expandable_animation_mode.dart';
 import '../models/expandable_animation_phase.dart';
 import '../transitions/expandable_animation_route.dart';
 import 'expandable_animation_scope.dart';
+import 'expandable_animation_theme.dart';
+import 'resolved_expandable_animation.dart';
 
 /// Signature for a function that composes the collapsed and expanded layers
 /// of an `ExpandableAnimation` inside the morphing surface.
@@ -108,12 +110,21 @@ typedef ExpandableAnimationTransitionBuilder = Widget Function(
 /// action. When the platform requests reduced motion and
 /// [respectReducedMotion] is `true`, transitions are instant.
 ///
+/// ## Defaults and theming
+///
+/// Every visual and gesture parameter is optional. A parameter left `null`
+/// uses the nearest [ExpandableAnimationTheme], and then the package default
+/// stated in its documentation. Wrap your app in an
+/// [ExpandableAnimationTheme] to set app-wide defaults once.
+///
 /// See also:
 ///
 /// * [ExpandableAnimationController], to expand and collapse from code.
 /// * [ExpandableAnimationMode], to expand to a dialog, a bottom sheet or
 ///   custom bounds instead of fullscreen.
 /// * [ExpandableAnimationPhysics], for spring-driven transitions.
+/// * [ExpandableAnimationTheme], for app-wide defaults.
+/// * [ExpandableAnimationZoomable], for pinch-zoomable expanded content.
 class ExpandableAnimation extends StatefulWidget {
   /// Creates a widget that expands [child] into the view built by
   /// [expandedBuilder].
@@ -122,38 +133,47 @@ class ExpandableAnimation extends StatefulWidget {
     required this.child,
     required this.expandedBuilder,
     this.controller,
-    this.mode = const ExpandableAnimationMode.fullscreen(),
-    this.duration = const Duration(milliseconds: 400),
+    this.mode,
+    this.duration,
     this.reverseDuration,
-    this.curve = Curves.easeInOutCubic,
+    this.curve,
     this.reverseCurve,
     this.physics,
-    this.borderRadius = BorderRadius.zero,
-    this.expandedBorderRadius = BorderRadius.zero,
+    this.borderRadius,
+    this.expandedBorderRadius,
     this.collapsedColor,
     this.expandedColor,
-    this.backgroundColor = const Color(0xFF000000),
-    this.backgroundOpacity = 0.5,
-    this.backgroundBlur = 0,
-    this.dismissOnBackgroundTap = true,
-    this.enableDragToDismiss = true,
-    this.gestureConfig = const ExpandableAnimationGestureConfig(),
+    this.backgroundColor,
+    this.backgroundOpacity,
+    this.backgroundBlur,
+    this.dismissOnBackgroundTap,
+    this.enableDragToDismiss,
+    this.gestureConfig,
     this.expandOnTap = true,
     this.enabled = true,
-    this.hideSourceWhileExpanded = true,
-    this.useRootNavigator = true,
-    this.respectReducedMotion = true,
+    this.hideSourceWhileExpanded,
+    this.useRootNavigator,
+    this.respectReducedMotion,
     this.transitionBuilder,
     this.semanticLabel,
-    this.backgroundSemanticLabel = 'Close',
+    this.backgroundSemanticLabel,
+    this.hoverScale,
     this.onExpanded,
     this.onCollapsed,
     this.onPhaseChanged,
   })  : assert(
-          backgroundOpacity >= 0 && backgroundOpacity <= 1,
+          backgroundOpacity == null ||
+              (backgroundOpacity >= 0 && backgroundOpacity <= 1),
           'backgroundOpacity must be between 0 and 1.',
         ),
-        assert(backgroundBlur >= 0, 'backgroundBlur must not be negative.');
+        assert(
+          backgroundBlur == null || backgroundBlur >= 0,
+          'backgroundBlur must not be negative.',
+        ),
+        assert(
+          hoverScale == null || hoverScale > 0,
+          'hoverScale must be positive.',
+        );
 
   /// The widget shown in place while collapsed. It is the starting point of
   /// the expansion and the end point of the collapse.
@@ -174,12 +194,12 @@ class ExpandableAnimation extends StatefulWidget {
 
   /// Where the view expands to. Defaults to
   /// `ExpandableAnimationMode.fullscreen()`.
-  final ExpandableAnimationMode mode;
+  final ExpandableAnimationMode? mode;
 
   /// The duration of the expansion. Defaults to 400 milliseconds.
   ///
   /// Ignored when [physics] is set.
-  final Duration duration;
+  final Duration? duration;
 
   /// The duration of the collapse. Defaults to [duration].
   ///
@@ -189,7 +209,7 @@ class ExpandableAnimation extends StatefulWidget {
   /// The curve of the expansion. Defaults to [Curves.easeInOutCubic].
   ///
   /// Ignored when [physics] is set.
-  final Curve curve;
+  final Curve? curve;
 
   /// The curve of the collapse. Defaults to [curve].
   ///
@@ -202,11 +222,11 @@ class ExpandableAnimation extends StatefulWidget {
 
   /// The corner radius of the surface while collapsed. Match it to the
   /// child's own shape for a seamless lift-off. Defaults to square corners.
-  final BorderRadius borderRadius;
+  final BorderRadius? borderRadius;
 
   /// The corner radius of the surface while expanded. Defaults to square
   /// corners.
-  final BorderRadius expandedBorderRadius;
+  final BorderRadius? expandedBorderRadius;
 
   /// The surface color behind the collapsed layer during the transition.
   /// Defaults to transparent.
@@ -218,11 +238,11 @@ class ExpandableAnimation extends StatefulWidget {
 
   /// The color of the background scrim behind the expanded view. Defaults
   /// to black.
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   /// The opacity of the background scrim when fully expanded, from 0 to 1.
   /// Multiplied with the alpha of [backgroundColor]. Defaults to `0.5`.
-  final double backgroundOpacity;
+  final double? backgroundOpacity;
 
   /// The blur sigma applied to the content behind the expanded view when
   /// fully expanded. `0` (the default) disables the blur.
@@ -230,19 +250,19 @@ class ExpandableAnimation extends StatefulWidget {
   /// Background blur re-renders everything behind the view every frame. It
   /// is noticeably more expensive than a plain scrim, especially on low-end
   /// devices and on the web; profile before enabling it.
-  final double backgroundBlur;
+  final double? backgroundBlur;
 
   /// Whether tapping the background outside the expanded view collapses it.
   /// Only visible with modes that do not cover the whole screen. Defaults to
   /// `true`.
-  final bool dismissOnBackgroundTap;
+  final bool? dismissOnBackgroundTap;
 
   /// Whether the user can drag the expanded view down to dismiss it.
   /// Defaults to `true`.
-  final bool enableDragToDismiss;
+  final bool? enableDragToDismiss;
 
   /// Tunes drag-to-dismiss. See [ExpandableAnimationGestureConfig].
-  final ExpandableAnimationGestureConfig gestureConfig;
+  final ExpandableAnimationGestureConfig? gestureConfig;
 
   /// Whether tapping [child] expands it. Defaults to `true`. Set to `false`
   /// when expansion is triggered only through the [controller].
@@ -255,15 +275,15 @@ class ExpandableAnimation extends StatefulWidget {
 
   /// Whether [child] is hidden in place while expanded, so the expansion
   /// appears to lift it out of the layout. Defaults to `true`.
-  final bool hideSourceWhileExpanded;
+  final bool? hideSourceWhileExpanded;
 
   /// Whether the expanded view is pushed on the root navigator, covering
   /// bottom navigation bars and nested navigators. Defaults to `true`.
-  final bool useRootNavigator;
+  final bool? useRootNavigator;
 
   /// Whether transitions become instant when the platform requests reduced
   /// motion (`MediaQueryData.disableAnimations`). Defaults to `true`.
-  final bool respectReducedMotion;
+  final bool? respectReducedMotion;
 
   /// Composes the collapsed and expanded layers inside the morphing surface.
   /// Defaults to [defaultTransitionBuilder], a cross-fade.
@@ -276,7 +296,16 @@ class ExpandableAnimation extends StatefulWidget {
   /// The semantic label of the background scrim, which acts as a close
   /// button when [dismissOnBackgroundTap] is `true`. Defaults to `'Close'`;
   /// pass a localized string in localized apps.
-  final String backgroundSemanticLabel;
+  final String? backgroundSemanticLabel;
+
+  /// How much [child] grows while a mouse pointer hovers it or it has
+  /// keyboard focus, as a hint that it can be opened. `1.0` (the default)
+  /// disables the effect; subtle values such as `1.02` work best.
+  ///
+  /// The scale animates over a short duration (instantly with reduced
+  /// motion) and is included in the expansion's starting bounds, so the
+  /// expansion continues from the enlarged widget.
+  final double? hoverScale;
 
   /// Called once each time an expansion completes.
   final VoidCallback? onExpanded;
@@ -381,6 +410,9 @@ class ExpandableAnimation extends StatefulWidget {
   }
 }
 
+/// How long the hover and focus scale takes to animate.
+const Duration _kHoverDuration = Duration(milliseconds: 150);
+
 class _ExpandableAnimationState extends State<ExpandableAnimation>
     implements ExpandableAnimationDelegate {
   ExpandableAnimationController? _ownedController;
@@ -389,6 +421,26 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
   Completer<void>? _expandCompleter;
   Completer<void>? _collapseCompleter;
   bool _configUpdateScheduled = false;
+
+  /// Identifies the subtree whose bounds the expansion starts from.
+  final GlobalKey _sourceKey = GlobalKey();
+
+  bool _hovered = false;
+  bool _focused = false;
+
+  ResolvedExpandableAnimation _resolve() => ResolvedExpandableAnimation.resolve(
+        widget,
+        ExpandableAnimationTheme.of(context),
+      );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The theme may have changed; refresh an open expanded view.
+    if (_route != null) {
+      _scheduleRouteConfigUpdate();
+    }
+  }
 
   ExpandableAnimationController get _controller =>
       widget.controller ?? _ownedController!;
@@ -441,7 +493,7 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
       if (!mounted || route == null || route.isDisposed) {
         return;
       }
-      route.config.value = widget;
+      route.config.value = _resolve();
       final NavigatorState? navigator = route.navigator;
       if (navigator != null) {
         route.capturedThemes.value =
@@ -493,21 +545,22 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
       }
     }
 
+    final ResolvedExpandableAnimation config = _resolve();
     final NavigatorState navigator =
-        Navigator.of(context, rootNavigator: widget.useRootNavigator);
+        Navigator.of(context, rootNavigator: config.useRootNavigator);
     final Rect? sourceRect = _measureSource(navigator);
     if (sourceRect == null) {
       return Future<void>.value();
     }
 
     final ExpandableAnimationRoute route = ExpandableAnimationRoute(
-      config: widget,
+      config: config,
       sourceRect: sourceRect,
       measureSource: () => _measureSource(navigator),
       capturedThemes:
           InheritedTheme.capture(from: context, to: navigator.context),
       expandableController: _controller,
-      reduceMotion: widget.respectReducedMotion &&
+      reduceMotion: config.respectReducedMotion &&
           (MediaQuery.maybeDisableAnimationsOf(context) ?? false),
       initialValue: initialValue,
       onStatusChanged: _handleRouteStatus,
@@ -666,7 +719,8 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
     if (!mounted) {
       return null;
     }
-    final RenderObject? box = context.findRenderObject();
+    // Measure inside the hover scale, so its transform is part of the rect.
+    final RenderObject? box = _sourceKey.currentContext?.findRenderObject();
     final RenderObject? overlay = navigator.overlay?.context.findRenderObject();
     if (box is! RenderBox ||
         !box.attached ||
@@ -687,7 +741,8 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
 
   @override
   Widget build(BuildContext context) {
-    final bool hidden = widget.hideSourceWhileExpanded && _route != null;
+    final ResolvedExpandableAnimation config = _resolve();
+    final bool hidden = config.hideSourceWhileExpanded && _route != null;
     Widget child = ExpandableAnimationScope(
       controller: _controller,
       child: Visibility(
@@ -708,6 +763,8 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
         label: widget.semanticLabel,
         child: FocusableActionDetector(
           enabled: widget.enabled,
+          onShowHoverHighlight: _handleHoverHighlight,
+          onShowFocusHighlight: _handleFocusHighlight,
           mouseCursor:
               widget.enabled ? SystemMouseCursors.click : MouseCursor.defer,
           actions: <Type, Action<Intent>>{
@@ -725,7 +782,28 @@ class _ExpandableAnimationState extends State<ExpandableAnimation>
         ),
       );
     }
-    return child;
+    final bool highlighted =
+        widget.enabled && widget.expandOnTap && (_hovered || _focused);
+    final bool reduceMotion = config.respectReducedMotion &&
+        (MediaQuery.maybeDisableAnimationsOf(context) ?? false);
+    return AnimatedScale(
+      scale: highlighted ? config.hoverScale : 1.0,
+      duration: reduceMotion ? Duration.zero : _kHoverDuration,
+      curve: Curves.easeOutCubic,
+      child: KeyedSubtree(key: _sourceKey, child: child),
+    );
+  }
+
+  void _handleHoverHighlight(bool value) {
+    if (value != _hovered) {
+      setState(() => _hovered = value);
+    }
+  }
+
+  void _handleFocusHighlight(bool value) {
+    if (value != _focused) {
+      setState(() => _focused = value);
+    }
   }
 }
 

@@ -98,6 +98,10 @@ class _ExpandableAnimationZoomableState
   Animation<double>? _routeAnimation;
   ExpandableDismissDragScope? _forwardingTo;
 
+  /// Whether the current one-finger interaction may still become a forwarded
+  /// dismiss drag (decided on its first movement).
+  bool _mayForward = false;
+
   /// Pointers kept out of the dismiss drag because they went down while the
   /// content was zoomed in, so they pan instead.
   final Map<int, ExpandableDismissDragScope> _blocked =
@@ -160,7 +164,9 @@ class _ExpandableAnimationZoomableState
     final ExpandableDismissDragScope? scope = _forwardingTo;
     _forwardingTo = null;
     if (scope != null) {
-      SchedulerBinding.instance.addPostFrameCallback((_) => scope.onEnd(0));
+      SchedulerBinding.instance.addPostFrameCallback(
+        (_) => scope.onEnd(Offset.zero),
+      );
     }
     _routeAnimation?.removeStatusListener(_handleRouteStatus);
     _controller.removeListener(_handleTransform);
@@ -206,34 +212,37 @@ class _ExpandableAnimationZoomableState
 
   void _handleInteractionStart(ScaleStartDetails details) {
     _zoomAnimation.stop();
-    if (details.pointerCount != 1 || _isZoomed) {
-      return;
-    }
-    final ExpandableDismissDragScope? scope =
-        ExpandableDismissDragScope.maybeOf(context);
-    if (scope != null && scope.onStart()) {
-      _forwardingTo = scope;
-    }
+    _mayForward = details.pointerCount == 1 && !_isZoomed;
   }
 
   void _handleInteractionUpdate(ScaleUpdateDetails details) {
-    final ExpandableDismissDragScope? scope = _forwardingTo;
-    if (scope == null) {
-      return;
-    }
     if (details.pointerCount > 1) {
       // A second finger turns the gesture into a pinch.
-      _endForwarding(0);
+      _mayForward = false;
+      _endForwarding(Offset.zero);
       return;
     }
-    scope.onUpdate(details.focalPointDelta.dy);
+    final Offset delta = details.focalPointDelta;
+    if (_forwardingTo == null && _mayForward && delta != Offset.zero) {
+      // Lock to the axis of the first movement, like a drag recognizer.
+      _mayForward = false;
+      final Axis axis =
+          delta.dy.abs() >= delta.dx.abs() ? Axis.vertical : Axis.horizontal;
+      final ExpandableDismissDragScope? scope =
+          ExpandableDismissDragScope.maybeOf(context);
+      if (scope != null && scope.onStart(axis)) {
+        _forwardingTo = scope;
+      }
+    }
+    _forwardingTo?.onUpdate(delta);
   }
 
   void _handleInteractionEnd(ScaleEndDetails details) {
-    _endForwarding(details.velocity.pixelsPerSecond.dy);
+    _mayForward = false;
+    _endForwarding(details.velocity.pixelsPerSecond);
   }
 
-  void _endForwarding(double velocity) {
+  void _endForwarding(Offset velocity) {
     final ExpandableDismissDragScope? scope = _forwardingTo;
     _forwardingTo = null;
     scope?.onEnd(velocity);
