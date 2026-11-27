@@ -61,6 +61,9 @@ into one wrapper:
 - Background scrim with configurable color, opacity and optional blur
 - Drag-to-dismiss with distance and velocity thresholds, spring settle-back,
   haptic feedback and scroll coordination
+- A flick hands its speed to the collapse, so fast flicks close faster
+- `ExpandableAnimationZoomable`: pinch, pan and double-tap zoom that cooperate
+  with drag-to-dismiss
 - `ExpandableAnimationController`: `expand()`, `collapse()`, `toggle()`,
   `phase`, `progress`, `isDragging`
 - Lifecycle callbacks: `onExpanded`, `onCollapsed`, `onPhaseChanged`
@@ -198,6 +201,7 @@ ExpandableAnimation(
     enableHapticFeedback: true,    // tick when crossing the threshold
     dismissFromScrollableContent: true,
     clampScrollPhysics: true,      // no iOS bounce competing at the top edge
+    matchReleaseVelocity: true,    // a flick's speed carries into the collapse
   ),
   // ...
 )
@@ -208,6 +212,31 @@ starts when the user pulls down while the scrollable is at its top.
 Horizontal scrollables such as `PageView` are never affected. A `PopScope` with
 `canPop: false` inside the expanded view vetoes drag, background-tap, Escape
 and back-button dismissals.
+
+When a drag dismisses the view, the collapse continues at the speed the finger
+left the screen and eases into place with a critically damped spring: your
+`physics` if set, otherwise one that settles in about `reverseDuration`.
+
+### Zoomable content
+
+A plain `InteractiveViewer` claims one-finger drags, which blocks
+drag-to-dismiss. Use `ExpandableAnimationZoomable` instead:
+
+```dart
+ExpandableAnimation(
+  backgroundOpacity: 1,
+  expandedBuilder: (context) => ExpandableAnimationZoomable(
+    maxScale: 4,
+    child: Image.asset('assets/photo.jpg', fit: BoxFit.contain),
+  ),
+  child: Image.asset('assets/photo_thumb.jpg', fit: BoxFit.cover),
+)
+```
+
+- Zoomed out: a downward drag dismisses as usual.
+- Zoomed in: one finger pans the image; dismissal waits until you zoom out.
+- Two fingers always pinch-zoom; double tap zooms in around the tap and back.
+- Collapsing while zoomed (for example with back) zooms out as it shrinks.
 
 ## Animation customization
 
@@ -270,6 +299,7 @@ The [example app](example/) and the
 | `ExpandableAnimationPhase` | `collapsed`, `expanding`, `expanded`, `collapsing`. |
 | `ExpandableAnimationTransitionBuilder` | Signature for custom layer transitions. |
 | `ExpandedBoundsContext` | Layout information passed to custom bounds resolvers. |
+| `ExpandableAnimationZoomable` | Pinch, pan and double-tap zoom that cooperate with drag-to-dismiss. |
 | `SpringCurve` | A `Curve` that follows a spring, usable anywhere. |
 
 Full documentation: [pub.dev API reference](https://pub.dev/documentation/expandable_animation/latest/).
@@ -337,8 +367,8 @@ gesture-driven expansion with one wrapper.
 - Inherited themes are carried into the expanded view, but other inherited
   widgets below the navigator (for example, providers placed under
   `MaterialApp`) are not; place them above the app or re-provide them.
-- Zoomable content (`InteractiveViewer`) competes with drag-to-dismiss.
-  Built-in zoom coordination is planned.
+- A plain `InteractiveViewer` inside the expanded view competes with
+  drag-to-dismiss; use `ExpandableAnimationZoomable` instead.
 - A pointer cancelled by the system mid-drag is treated like a release.
 
 ## Documentation
@@ -353,7 +383,6 @@ gesture-driven expansion with one wrapper.
 
 Planned, not yet available:
 
-- Zoom and pan coordination for image viewers
 - Horizontal and multi-directional dismissal
 - Hover and focus effects for desktop
 - App-wide defaults through a theme extension

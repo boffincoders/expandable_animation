@@ -43,11 +43,20 @@ ExpandableAnimation(
   the thumbnail was removed while the viewer was open, the image returns to its new position or fades out in
   place.</p>
 
-  <h2>Zoom</h2>
-  <p class="callout">Pinch-to-zoom inside the viewer (<code>InteractiveViewer</code>) competes with the drag
-  gesture. Built-in zoom coordination is on the roadmap; until then, set
-  <code>enableDragToDismiss: false</code> for zoomable viewers and rely on the close button, background tap and
-  back button.</p>
+  <h2>Pinch and double-tap zoom</h2>
+  <p>Wrap the full image in <code>ExpandableAnimationZoomable</code>. It coordinates zooming with
+  drag-to-dismiss, which a plain <code>InteractiveViewer</code> would block:</p>
+<pre><code class="language-dart">expandedBuilder: (context) =&gt; ExpandableAnimationZoomable(
+  maxScale: 4,
+  doubleTapScale: 2.5,
+  child: PhotoViewer(photo: photo),
+),</code></pre>
+  <ul>
+    <li>Zoomed out, a downward drag dismisses the viewer as usual.</li>
+    <li>Zoomed in, one finger pans the photo; dismissal waits until you zoom back out.</li>
+    <li>Two fingers always pinch-zoom; a double tap zooms in around the tapped point, or back out.</li>
+    <li>If the viewer closes while zoomed (back button, Escape), the photo zooms out as it shrinks.</li>
+  </ul>
 
   <h2>Try it</h2>
   <p>Open the <a href="{{ROOT}}demo/#/photo-gallery">photo gallery demo</a>.</p>

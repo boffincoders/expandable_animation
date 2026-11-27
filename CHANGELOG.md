@@ -5,6 +5,15 @@ All notable changes to this package are documented here. This project follows
 
 ## Unreleased
 
+- Added `ExpandableAnimationZoomable`: pinch, pan and double-tap zoom for
+  expanded content that cooperates with drag-to-dismiss. Zoomed-in content
+  pans instead of dismissing, and zooms back out when the view collapses.
+- A drag that dismisses the view now hands its speed to the collapse, using
+  the configured `physics` or a critically damped spring that settles in about
+  `reverseDuration`. Opt out with
+  `ExpandableAnimationGestureConfig.matchReleaseVelocity: false`.
+- Fixed `ExpandableAnimationController.progress` staying at the drag value
+  while a dragged view collapsed.
 - Documentation: platform support table now reflects integration tests run on
   the iOS Simulator, the Android emulator and macOS desktop.
 

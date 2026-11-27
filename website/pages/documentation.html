@@ -117,6 +117,10 @@ controller.dispose();</code></pre>
   <p>See the dedicated <a href="{{ROOT}}examples/drag-to-dismiss/">drag-to-dismiss guide</a>. In short:
   drag down to dismiss; vertical scrollables scroll until they reach the top; <code>PopScope</code> can veto;
   thresholds live in <code>ExpandableAnimationGestureConfig</code>.</p>
+  <p>A drag that dismisses the view hands its speed to the collapse (<code>matchReleaseVelocity</code>,
+  on by default). For zoomable content such as photos, wrap it in
+  <code>ExpandableAnimationZoomable</code>: pinch, pan and double-tap zoom that pause dismissal while
+  zoomed in. See the <a href="{{ROOT}}examples/fullscreen-image/">fullscreen image guide</a>.</p>
 
   <h2 id="transitions">Custom transitions</h2>
   <p>The <code>transitionBuilder</code> receives the clamped progress animation and the two layers. Each layer
@@ -179,7 +183,8 @@ controller.dispose();</code></pre>
 
   <h2 id="limitations">Known limitations</h2>
   <ul>
-    <li>Zoomable content (<code>InteractiveViewer</code>) competes with drag-to-dismiss.</li>
+    <li>A plain <code>InteractiveViewer</code> competes with drag-to-dismiss; use
+      <code>ExpandableAnimationZoomable</code> instead.</li>
     <li>Inherited widgets other than themes are not carried into the expanded view.</li>
     <li>Dismissal is downward only.</li>
   </ul>

@@ -19,7 +19,8 @@ schema: article
     <li>On release it dismisses if it was dragged at least <code>dismissThreshold</code> × its height, or
       flung downward faster than <code>velocityThreshold</code>.</li>
     <li>Otherwise it springs back, carrying the release velocity. A fast upward fling always cancels.</li>
-    <li>When it dismisses, the collapse starts from exactly where the finger left it.</li>
+    <li>When it dismisses, the collapse starts from exactly where the finger left it, at the speed the
+      finger was moving (set <code>matchReleaseVelocity: false</code> to use the plain reverse animation).</li>
   </ol>
 
 <pre><code class="language-dart">ExpandableAnimation(
@@ -30,6 +31,7 @@ schema: article
     minScale: 0.85,
     dragResistance: 0.6,
     enableHapticFeedback: true,
+    matchReleaseVelocity: true,
   ),
   expandedBuilder: (context) =&gt; const DetailsPage(),
   child: const SummaryCard(),
