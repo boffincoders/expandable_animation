@@ -5,6 +5,18 @@ All notable changes to this package are documented here. This project follows
 
 ## Unreleased
 
+- Added `ExpandableAnimationGestureConfig.dismissDirections` and
+  `ExpandableAnimationDismissDirection`: dismiss by dragging down, up, left
+  or right in any combination. Vertical lists dismiss past either end and
+  horizontal scrollables (such as `PageView`) past their first or last page.
+- Added `ExpandableAnimationTheme` and `ExpandableAnimationThemeData` for
+  app-wide defaults. **Breaking:** the themable `ExpandableAnimation`
+  parameters (for example `duration`, `curve`, `mode`, `borderRadius`,
+  `backgroundOpacity`, `gestureConfig`) are now nullable fields; leaving one
+  out uses the theme, then the previous default. Code that only passes values
+  is unaffected.
+- Added `ExpandableAnimation.hoverScale`: a subtle lift on mouse hover and
+  keyboard focus, off by default.
 - Added `ExpandableAnimationZoomable`: pinch, pan and double-tap zoom for
   expanded content that cooperates with drag-to-dismiss. Zoomed-in content
   pans instead of dismissing, and zooms back out when the view collapses.

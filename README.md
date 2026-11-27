@@ -64,6 +64,9 @@ into one wrapper:
 - A flick hands its speed to the collapse, so fast flicks close faster
 - `ExpandableAnimationZoomable`: pinch, pan and double-tap zoom that cooperate
   with drag-to-dismiss
+- Dismiss in any combination of directions: down, up, left and right
+- App-wide defaults with `ExpandableAnimationTheme`
+- Optional hover and keyboard-focus lift on desktop and web (`hoverScale`)
 - `ExpandableAnimationController`: `expand()`, `collapse()`, `toggle()`,
   `phase`, `progress`, `isDragging`
 - Lifecycle callbacks: `onExpanded`, `onCollapsed`, `onPhaseChanged`
@@ -202,6 +205,9 @@ ExpandableAnimation(
     dismissFromScrollableContent: true,
     clampScrollPhysics: true,      // no iOS bounce competing at the top edge
     matchReleaseVelocity: true,    // a flick's speed carries into the collapse
+    dismissDirections: {           // any of down, up, left, right
+      ExpandableAnimationDismissDirection.down,
+    },
   ),
   // ...
 )
@@ -209,9 +215,14 @@ ExpandableAnimation(
 
 Vertical scrollables inside the expanded view scroll normally. A dismissal only
 starts when the user pulls down while the scrollable is at its top.
-Horizontal scrollables such as `PageView` are never affected. A `PopScope` with
+Horizontal scrollables such as `PageView` are untouched unless `left` or `right`
+is allowed. A `PopScope` with
 `canPop: false` inside the expanded view vetoes drag, background-tap, Escape
 and back-button dismissals.
+
+Each drag locks to the axis it starts on. With `dismissDirections` such as
+`{down, up}` or `{left, right}`, vertical lists dismiss when pulled past
+either end and a `PageView` dismisses when swiped past its first or last page.
 
 When a drag dismisses the view, the collapse continues at the speed the finger
 left the screen and eases into place with a critically damped spring: your
@@ -237,6 +248,33 @@ ExpandableAnimation(
 - Zoomed in: one finger pans the image; dismissal waits until you zoom out.
 - Two fingers always pinch-zoom; double tap zooms in around the tap and back.
 - Collapsing while zoomed (for example with back) zooms out as it shrinks.
+
+## App-wide defaults
+
+Every visual and gesture parameter is optional. Values you leave out come from
+the nearest `ExpandableAnimationTheme`, and then from the package defaults:
+
+```dart
+ExpandableAnimationTheme(
+  data: const ExpandableAnimationThemeData(
+    physics: ExpandableAnimationPhysics.snappy,
+    borderRadius: BorderRadius.all(Radius.circular(20)),
+    backgroundBlur: 8,
+    hoverScale: 1.02,
+  ),
+  child: MaterialApp(home: const HomePage()),
+)
+```
+
+A parameter set on an `ExpandableAnimation` always wins over the theme. The
+theme is carried into expanded views, so nested expansions use it too.
+
+## Hover and focus effect
+
+On desktop and web, `hoverScale` gently enlarges the collapsed widget while
+the mouse is over it or it has keyboard focus, hinting that it opens. It is
+off by default (`1.0`); subtle values like `1.02` work best. The expansion
+starts from the enlarged widget, so there is no jump.
 
 ## Animation customization
 
@@ -299,6 +337,8 @@ The [example app](example/) and the
 | `ExpandableAnimationPhase` | `collapsed`, `expanding`, `expanded`, `collapsing`. |
 | `ExpandableAnimationTransitionBuilder` | Signature for custom layer transitions. |
 | `ExpandedBoundsContext` | Layout information passed to custom bounds resolvers. |
+| `ExpandableAnimationTheme` / `ExpandableAnimationThemeData` | App-wide defaults for every option. |
+| `ExpandableAnimationDismissDirection` | `down`, `up`, `left`, `right` for `dismissDirections`. |
 | `ExpandableAnimationZoomable` | Pinch, pan and double-tap zoom that cooperate with drag-to-dismiss. |
 | `SpringCurve` | A `Curve` that follows a spring, usable anywhere. |
 
@@ -383,9 +423,6 @@ gesture-driven expansion with one wrapper.
 
 Planned, not yet available:
 
-- Horizontal and multi-directional dismissal
-- Hover and focus effects for desktop
-- App-wide defaults through a theme extension
 - Shared element slots that morph individually
 
 ## Contributing

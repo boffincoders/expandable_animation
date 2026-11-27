@@ -37,10 +37,24 @@ schema: article
   child: const SummaryCard(),
 )</code></pre>
 
+  <h2>Directions</h2>
+  <p>Dismissal is downward by default. Allow any combination of directions:</p>
+<pre><code class="language-dart">gestureConfig: const ExpandableAnimationGestureConfig(
+  dismissDirections: {
+    ExpandableAnimationDismissDirection.down,
+    ExpandableAnimationDismissDirection.up,
+    ExpandableAnimationDismissDirection.left,
+    ExpandableAnimationDismissDirection.right,
+  },
+),</code></pre>
+  <p>Each drag locks to the axis it starts on. The surface shrinks away from the edge it leaves, so a
+  rightward drag anchors at the left edge and slides right.</p>
+
   <h2>Scrollable content</h2>
   <p>Vertical lists inside the expanded view keep scrolling normally. The dismiss gesture only starts when a
   list that is already at its top is pulled further down, and it hands control back if the user drags up
-  again. Horizontal scrollables, such as a <code>PageView</code>, are never affected. Set
+  again. Horizontal scrollables, such as a <code>PageView</code>, are only involved when <code>left</code> or
+  <code>right</code> is allowed: then swiping past the first or last page dismisses. Set
   <code>dismissFromScrollableContent: false</code> to dismiss only from non-scrolling areas.</p>
 
   <h2>Preventing a dismissal</h2>

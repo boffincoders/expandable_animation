@@ -15,6 +15,7 @@ schema: article
       <li><a href="#controller">Controller and lifecycle</a></li>
       <li><a href="#motion">Duration, curves and spring physics</a></li>
       <li><a href="#gestures">Drag-to-dismiss and gestures</a></li>
+      <li><a href="#theme">App-wide defaults</a></li>
       <li><a href="#transitions">Custom transitions</a></li>
       <li><a href="#navigation">Navigation, themes and state</a></li>
       <li><a href="#accessibility">Accessibility</a></li>
@@ -48,6 +49,7 @@ schema: article
       <tr><td><code>useRootNavigator</code></td><td><code>true</code></td><td>Cover bottom bars and nested navigators.</td></tr>
       <tr><td><code>respectReducedMotion</code></td><td><code>true</code></td><td>Instant transitions when the OS asks for less motion.</td></tr>
       <tr><td><code>transitionBuilder</code></td><td>cross-fade</td><td>Compose the collapsed and expanded layers.</td></tr>
+      <tr><td><code>hoverScale</code></td><td>1.0 (off)</td><td>Lift on mouse hover and keyboard focus.</td></tr>
       <tr><td><code>semanticLabel</code>, <code>backgroundSemanticLabel</code></td><td><code>null</code>, <code>'Close'</code></td><td>Screen reader labels.</td></tr>
       <tr><td><code>onExpanded</code>, <code>onCollapsed</code>, <code>onPhaseChanged</code></td><td>—</td><td>Lifecycle callbacks.</td></tr>
     </tbody>
@@ -116,11 +118,33 @@ controller.dispose();</code></pre>
   <h2 id="gestures">Drag-to-dismiss and gestures</h2>
   <p>See the dedicated <a href="{{ROOT}}examples/drag-to-dismiss/">drag-to-dismiss guide</a>. In short:
   drag down to dismiss; vertical scrollables scroll until they reach the top; <code>PopScope</code> can veto;
-  thresholds live in <code>ExpandableAnimationGestureConfig</code>.</p>
+  thresholds live in <code>ExpandableAnimationGestureConfig</code>. Set <code>dismissDirections</code> to
+  any combination of <code>down</code>, <code>up</code>, <code>left</code> and <code>right</code>.</p>
   <p>A drag that dismisses the view hands its speed to the collapse (<code>matchReleaseVelocity</code>,
   on by default). For zoomable content such as photos, wrap it in
   <code>ExpandableAnimationZoomable</code>: pinch, pan and double-tap zoom that pause dismissal while
   zoomed in. See the <a href="{{ROOT}}examples/fullscreen-image/">fullscreen image guide</a>.</p>
+
+  <h2 id="theme">App-wide defaults</h2>
+  <p>Every parameter in the table above except <code>child</code>, <code>expandedBuilder</code>,
+  <code>controller</code>, callbacks and labels is optional. Leave it out and the value comes from the
+  nearest <code>ExpandableAnimationTheme</code>, then from the default shown above:</p>
+<pre><code class="language-dart">ExpandableAnimationTheme(
+  data: const ExpandableAnimationThemeData(
+    physics: ExpandableAnimationPhysics.snappy,
+    borderRadius: BorderRadius.all(Radius.circular(20)),
+    gestureConfig: ExpandableAnimationGestureConfig(
+      dismissDirections: {
+        ExpandableAnimationDismissDirection.down,
+        ExpandableAnimationDismissDirection.up,
+      },
+    ),
+    hoverScale: 1.02,
+  ),
+  child: MaterialApp(home: const HomePage()),
+)</code></pre>
+  <p>Widget values always win over the theme. The theme is an <code>InheritedTheme</code>, so it also
+  applies inside expanded views.</p>
 
   <h2 id="transitions">Custom transitions</h2>
   <p>The <code>transitionBuilder</code> receives the clamped progress animation and the two layers. Each layer
@@ -186,6 +210,5 @@ controller.dispose();</code></pre>
     <li>A plain <code>InteractiveViewer</code> competes with drag-to-dismiss; use
       <code>ExpandableAnimationZoomable</code> instead.</li>
     <li>Inherited widgets other than themes are not carried into the expanded view.</li>
-    <li>Dismissal is downward only.</li>
   </ul>
 </article>
