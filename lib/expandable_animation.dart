@@ -31,3 +31,5 @@ export 'src/models/expandable_animation_phase.dart'
     show ExpandableAnimationPhase;
 export 'src/widgets/expandable_animation.dart'
     show ExpandableAnimation, ExpandableAnimationTransitionBuilder;
+export 'src/widgets/expandable_animation_zoomable.dart'
+    show ExpandableAnimationZoomable;

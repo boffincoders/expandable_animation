@@ -38,6 +38,7 @@ class ExpandableAnimationGestureConfig {
     this.enableHapticFeedback = true,
     this.dismissFromScrollableContent = true,
     this.clampScrollPhysics = true,
+    this.matchReleaseVelocity = true,
   })  : assert(
           dismissThreshold > 0 && dismissThreshold <= 1,
           'dismissThreshold must be in the range (0, 1].',
@@ -91,6 +92,16 @@ class ExpandableAnimationGestureConfig {
   /// Defaults to `true`.
   final bool clampScrollPhysics;
 
+  /// Whether a drag that dismisses the view hands its speed to the collapse.
+  ///
+  /// When `true`, the collapse starts moving at the speed the finger left
+  /// the screen and eases into the source with a critically damped spring
+  /// (the configured `physics`, or one that settles in about the reverse
+  /// duration). A quick flick therefore collapses faster than a slow release.
+  /// When `false`, the collapse always uses the regular reverse animation.
+  /// Defaults to `true`.
+  final bool matchReleaseVelocity;
+
   /// Creates a copy of this configuration with the given fields replaced.
   ExpandableAnimationGestureConfig copyWith({
     double? dismissThreshold,
@@ -100,6 +111,7 @@ class ExpandableAnimationGestureConfig {
     bool? enableHapticFeedback,
     bool? dismissFromScrollableContent,
     bool? clampScrollPhysics,
+    bool? matchReleaseVelocity,
   }) {
     return ExpandableAnimationGestureConfig(
       dismissThreshold: dismissThreshold ?? this.dismissThreshold,
@@ -110,6 +122,7 @@ class ExpandableAnimationGestureConfig {
       dismissFromScrollableContent:
           dismissFromScrollableContent ?? this.dismissFromScrollableContent,
       clampScrollPhysics: clampScrollPhysics ?? this.clampScrollPhysics,
+      matchReleaseVelocity: matchReleaseVelocity ?? this.matchReleaseVelocity,
     );
   }
 
@@ -122,7 +135,8 @@ class ExpandableAnimationGestureConfig {
       other.dragResistance == dragResistance &&
       other.enableHapticFeedback == enableHapticFeedback &&
       other.dismissFromScrollableContent == dismissFromScrollableContent &&
-      other.clampScrollPhysics == clampScrollPhysics;
+      other.clampScrollPhysics == clampScrollPhysics &&
+      other.matchReleaseVelocity == matchReleaseVelocity;
 
   @override
   int get hashCode => Object.hash(
@@ -133,6 +147,7 @@ class ExpandableAnimationGestureConfig {
         enableHapticFeedback,
         dismissFromScrollableContent,
         clampScrollPhysics,
+        matchReleaseVelocity,
       );
 
   @override
@@ -142,5 +157,6 @@ class ExpandableAnimationGestureConfig {
       'dragResistance: $dragResistance, '
       'enableHapticFeedback: $enableHapticFeedback, '
       'dismissFromScrollableContent: $dismissFromScrollableContent, '
-      'clampScrollPhysics: $clampScrollPhysics)';
+      'clampScrollPhysics: $clampScrollPhysics, '
+      'matchReleaseVelocity: $matchReleaseVelocity)';
 }

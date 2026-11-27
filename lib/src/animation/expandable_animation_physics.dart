@@ -155,6 +155,85 @@ Duration springSettleDuration(SpringDescription spring) {
   );
 }
 
+/// Bounds, in radians per second, for the natural frequency searched by
+/// [criticallyDampedSpring].
+const double _kMinOmega = 0.5;
+const double _kMaxOmega = 2000;
+
+/// Returns a critically damped spring (mass 1) that settles from rest in
+/// about [settle], using the same tolerance as [springSettleDuration].
+///
+/// Used for velocity-matched collapses when no [ExpandableAnimationPhysics]
+/// is configured, so the configured reverse duration keeps its meaning.
+SpringDescription criticallyDampedSpring(Duration settle) {
+  SpringDescription spring(double omega) =>
+      SpringDescription.withDampingRatio(mass: 1, stiffness: omega * omega);
+  // Settle time decreases monotonically as the frequency rises.
+  double low = _kMinOmega;
+  double high = _kMaxOmega;
+  for (int i = 0; i < 24; i++) {
+    final double mid = math.sqrt(low * high);
+    if (springSettleDuration(spring(mid)) > settle) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  return spring(high);
+}
+
+/// The duration and curve of a spring that moves a transition value from
+/// `from` to 0, starting at `velocity` (value per second).
+///
+/// Expressed as a curve over a fixed duration so it can drive
+/// `AnimationController.animateBack`, which (unlike `animateBackWith`) is
+/// available on every supported Flutter version.
+({Duration duration, Curve curve}) springCollapseMotion(
+  SpringDescription spring, {
+  required double from,
+  required double velocity,
+}) {
+  final SpringSimulation simulation = SpringSimulation(
+    spring,
+    from,
+    0,
+    velocity,
+    tolerance: _settleTolerance,
+  );
+  final double maxSeconds =
+      ExpandableAnimationPhysics.maxSettleDuration.inMicroseconds /
+          Duration.microsecondsPerSecond;
+  double t = _settleStepSeconds;
+  while (t < maxSeconds && !simulation.isDone(t)) {
+    t += _settleStepSeconds;
+  }
+  final double seconds = math.min(t, maxSeconds);
+  return (
+    duration: Duration(
+      microseconds: (seconds * Duration.microsecondsPerSecond).round(),
+    ),
+    curve: _CollapseSpringCurve(simulation, seconds, from),
+  );
+}
+
+/// Maps normalized time to the fraction of the way from `from` to 0 that a
+/// spring simulation has travelled.
+class _CollapseSpringCurve extends Curve {
+  const _CollapseSpringCurve(this.simulation, this.seconds, this.from);
+
+  final SpringSimulation simulation;
+  final double seconds;
+  final double from;
+
+  @override
+  double transformInternal(double t) {
+    if (from <= 0) {
+      return 1;
+    }
+    return (from - simulation.x(t * seconds)) / from;
+  }
+}
+
 /// A [Curve] that follows a spring moving from 0 to 1 starting at rest.
 ///
 /// The curve is stretched over the spring's settle time (see

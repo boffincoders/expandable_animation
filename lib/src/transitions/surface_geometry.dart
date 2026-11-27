@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/widgets.dart';
@@ -165,6 +166,38 @@ bool shouldDismissDrag({
     return true;
   }
   return offset >= extent * config.dismissThreshold;
+}
+
+/// The fastest collapse a release velocity may request, in transition
+/// progress per second (the whole collapse in 1/8 of a second).
+const double kMaxReleaseProgressVelocity = 8.0;
+
+/// Converts the vertical release velocity of a dismiss drag into the initial
+/// velocity of the collapse, in transition progress per second.
+///
+/// The surface moves at [fingerVelocity] (logical pixels per second,
+/// positive downwards) scaled by [dragResistance]. Only the part of that
+/// motion heading towards [source] speeds up the collapse; motion away from
+/// it is ignored rather than reversing the collapse. The result is never
+/// positive (progress decreases while collapsing) and its magnitude is
+/// capped at [kMaxReleaseProgressVelocity].
+double releaseProgressVelocity({
+  required Rect released,
+  required Rect? source,
+  required double fingerVelocity,
+  required double dragResistance,
+}) {
+  final Offset toSource = (source ?? released).center - released.center;
+  final double distance = toSource.distance;
+  if (distance < 1 || fingerVelocity == 0) {
+    return 0;
+  }
+  final double towardsSource =
+      fingerVelocity * dragResistance * (toSource.dy / distance);
+  if (towardsSource <= 0) {
+    return 0;
+  }
+  return -math.min(towardsSource / distance, kMaxReleaseProgressVelocity);
 }
 
 /// Removes the parts of [padding] that fall outside [rect] inside an

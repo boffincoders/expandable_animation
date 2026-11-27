@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../animation/expandable_animation_physics.dart';
 import '../controllers/expandable_animation_controller.dart';
 import '../widgets/expandable_animation.dart';
 import '../widgets/expanded_surface.dart';
@@ -155,6 +156,33 @@ class ExpandableAnimationRoute extends PopupRoute<void> {
   /// finished instantly and a new route continues from the same position.
   void finishImmediately() {
     controller?.value = 0;
+  }
+
+  /// Whether the current collapse is driven by a spring that continues the
+  /// velocity of a dismiss drag. While `true`, the surface maps the linear
+  /// route animation directly instead of applying the reverse curve.
+  bool get isSpringCollapse => _isSpringCollapse;
+  bool _isSpringCollapse = false;
+
+  /// Replaces the regular reverse animation with [spring], starting at
+  /// [velocity] (transition progress per second, negative while
+  /// collapsing). Call right after this route has been popped.
+  void collapseWithSpring(SpringDescription spring, double velocity) {
+    final AnimationController? controller = this.controller;
+    if (controller == null || _disposed) {
+      return;
+    }
+    _isSpringCollapse = true;
+    final ({Duration duration, Curve curve}) motion = springCollapseMotion(
+      spring,
+      from: controller.value,
+      velocity: velocity,
+    );
+    controller.animateBack(
+      0,
+      duration: motion.duration,
+      curve: motion.curve,
+    );
   }
 
   /// Pops this route in response to a user gesture, honoring `PopScope`

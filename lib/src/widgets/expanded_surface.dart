@@ -1,10 +1,13 @@
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../animation/expandable_animation_physics.dart';
+import '../gestures/dismiss_drag_scope.dart';
 import '../models/expandable_animation_gesture_config.dart';
 import '../models/expandable_animation_mode.dart';
 import '../transitions/expandable_animation_route.dart';
@@ -52,12 +55,21 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   Curve? _curveReverse;
 
   bool _dragging = false;
+
+  /// Pointers that descendants asked to keep out of the dismiss drag.
+  final Set<int> _blockedPointers = <int>{};
   bool _pastThreshold = false;
 
   /// The expanded bounds from the most recent layout.
   Rect _target = Rect.zero;
 
   ExpandableAnimationRoute get _route => widget.route;
+
+  /// The transition value used for geometry: curved normally, linear while a
+  /// velocity-matched spring drives the collapse (the spring already shapes
+  /// the motion, so applying the reverse curve on top would distort it).
+  double get _progress =>
+      _route.isSpringCollapse ? _route.animation!.value : _curved.value;
   ExpandableAnimation get _config => _route.config.value;
   ExpandableAnimationGestureConfig get _gestures => _config.gestureConfig;
 
@@ -83,7 +95,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       curve: spring ? config.physics!.curve : config.curve,
       reverseCurve: spring ? config.physics!.reverseCurve : config.reverseCurve,
     );
-    _clamped = _ClampedAnimation(_curved);
+    _clamped = _ClampedAnimation(_curved, () => _progress);
   }
 
   void _handleConfigChanged() {
@@ -133,15 +145,29 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
         dragProgress(offset: _dragOffset.value, extent: _target.height);
   }
 
-  void _startDrag() {
-    if (_dragging || !_canDrag) {
-      return;
+  bool _startDrag() {
+    if (_dragging) {
+      return true;
+    }
+    if (!_canDrag) {
+      return false;
     }
     _settleController.stop();
     _dragging = true;
     _pastThreshold = _isPastThreshold(_dragOffset.value);
     _route.isDragging.value = true;
+    return true;
   }
+
+  void _handleDragStart(DragStartDetails details) => _startDrag();
+
+  void _handleDragUpdate(DragUpdateDetails details) =>
+      _updateDrag(details.delta.dy);
+
+  void _handleDragEnd(DragEndDetails details) =>
+      _endDrag(details.primaryVelocity ?? 0);
+
+  void _handleDragCancel() => _endDrag(0);
 
   bool _isPastThreshold(double offset) =>
       offset >= _target.height * _gestures.dismissThreshold;
@@ -177,13 +203,13 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       extent: _target.height,
       config: _gestures,
     );
-    if (dismiss && _dismissFromDrag(offset)) {
+    if (dismiss && _dismissFromDrag(offset, velocity)) {
       return;
     }
     _settleBack(offset, velocity);
   }
 
-  bool _dismissFromDrag(double offset) {
+  bool _dismissFromDrag(double offset, double velocity) {
     final ExpandableAnimation config = _config;
     final SurfaceGeometry released = dragSurfaceGeometry(
       expanded: SurfaceGeometry(
@@ -206,6 +232,19 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       return false;
     }
     _dragOffset.value = 0;
+    _reportDragProgress();
+    if (_gestures.matchReleaseVelocity && !_route.reduceMotion) {
+      _route.collapseWithSpring(
+        config.physics?.reverseDescription ??
+            criticallyDampedSpring(_route.reverseTransitionDuration),
+        releaseProgressVelocity(
+          released: released.rect,
+          source: _route.source.value,
+          fingerVelocity: velocity,
+          dragResistance: _gestures.dragResistance,
+        ),
+      );
+    }
     return true;
   }
 
@@ -334,6 +373,16 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
         child: expanded,
       );
     }
+    if (config.enableDragToDismiss) {
+      expanded = ExpandableDismissDragScope(
+        onStart: _startDrag,
+        onUpdate: _updateDrag,
+        onEnd: _endDrag,
+        blockPointer: _blockedPointers.add,
+        unblockPointer: _blockedPointers.remove,
+        child: expanded,
+      );
+    }
     expanded = MediaQuery(
       data: mediaQuery.copyWith(
         padding: paddingWithinRect(mediaQuery.padding, target, overlaySize),
@@ -367,15 +416,25 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
         onNotification: _handleIndicatorNotification,
         child: NotificationListener<ScrollNotification>(
           onNotification: _handleScrollNotification,
-          child: GestureDetector(
+          child: RawGestureDetector(
             // Blank areas of the surface are draggable too.
             behavior: HitTestBehavior.opaque,
-            onVerticalDragStart: (_) => _startDrag(),
-            onVerticalDragUpdate: (DragUpdateDetails details) =>
-                _updateDrag(details.delta.dy),
-            onVerticalDragEnd: (DragEndDetails details) =>
-                _endDrag(details.primaryVelocity ?? 0),
-            onVerticalDragCancel: () => _endDrag(0),
+            gestures: <Type, GestureRecognizerFactory>{
+              _DismissDragGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<
+                      _DismissDragGestureRecognizer>(
+                () => _DismissDragGestureRecognizer(
+                  isBlocked: _blockedPointers.contains,
+                  debugOwner: this,
+                ),
+                (_DismissDragGestureRecognizer recognizer) {
+                  recognizer.onStart = _handleDragStart;
+                  recognizer.onUpdate = _handleDragUpdate;
+                  recognizer.onEnd = _handleDragEnd;
+                  recognizer.onCancel = _handleDragCancel;
+                },
+              ),
+            },
             child: surfaceContent,
           ),
         ),
@@ -400,7 +459,7 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
   }
 
   Widget _buildFrame(ExpandableAnimation config, Rect target, Widget content) {
-    final double t = _curved.value;
+    final double t = _progress;
     final SurfaceGeometry? released = _route.releaseGeometry;
     final Rect destination = released?.rect ?? target;
     final BorderRadius destinationRadius =
@@ -481,6 +540,18 @@ class _ExpandedSurfaceState extends State<ExpandedSurface>
       ),
     );
   }
+}
+
+/// The surface's vertical drag recognizer, which ignores pointers that
+/// descendants have blocked (see [ExpandableDismissDragScope.blockPointer]).
+class _DismissDragGestureRecognizer extends VerticalDragGestureRecognizer {
+  _DismissDragGestureRecognizer({required this.isBlocked, super.debugOwner});
+
+  final bool Function(int pointer) isBlocked;
+
+  @override
+  bool isPointerAllowed(PointerEvent event) =>
+      !isBlocked(event.pointer) && super.isPointerAllowed(event);
 }
 
 /// Lays [child] out at its natural [size], then scales it to the available
@@ -576,18 +647,21 @@ class _InteractiveWhenSettledState extends State<_InteractiveWhenSettled> {
   }
 }
 
-/// An animation that clamps its parent's value to `[0, 1]`.
+/// An animation that clamps a transition value to `[0, 1]`, notifying when
+/// its [parent] does.
 ///
 /// Springs may overshoot past `1.0`; geometry uses the raw value so the
 /// overshoot is visible, while opacity-based transition builders receive the
 /// clamped value.
 class _ClampedAnimation extends Animation<double>
     with AnimationWithParentMixin<double> {
-  _ClampedAnimation(this.parent);
+  _ClampedAnimation(this.parent, this._read);
 
   @override
   final Animation<double> parent;
 
+  final double Function() _read;
+
   @override
-  double get value => parent.value.clamp(0.0, 1.0);
+  double get value => _read().clamp(0.0, 1.0);
 }
